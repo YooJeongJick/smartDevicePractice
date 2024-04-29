@@ -1,0 +1,169 @@
+목차
+=
+- 정의
+  - 유동 IP
+  - DDNS
+
+- 온습도
+
+<br>
+<br>
+
+정의
+=
+유동 IP
+-
+**유동 IP**는 dynamic address 으로도 불리는데,   
+이는 <u>변화하는 IP라는 뜻을</u> 담고 있다.   
+
+<br>
+
+예를 들어 각각의 컴퓨터가 지닌 IP가 있다고 할 때   
+장기간 미사용 시, 통신사는 부여했던 IP 주소를 회수한다.   
+회수한 IP는 새로운 가입자에게 다시 부여되며,   
+기존의 컴퓨터가 다시 접속하면 새로운 IP를 부여한다.   
+
+<br>
+
+위와 같은 방식을 사용하는 이유는    
+통신사가 지닌 IP는 한정적이기 때문인데,   
+<u>일반적으로 사용되는 IP는 대부분 이에 속한다.</u>   
+
+<br>
+<br>
+
+DDNS
+-
+하지만, 앞선 유동 IP를 이용할 시 접속 상의 문제가 발생할 수 있다.   
+이는 도메인 주소와 IP 주소가 연결 되어 있지만,   
+IP 주소가 바뀌어도 도메인은 기존 IP 주소와 연결되어 있기 때문이다.   
+
+<br>
+
+이를 방지하기 위해, <u>도메인과 IP를 지속적으로 동기화 시키는 것이</u> **DDNS**이다.   
+
+<br>
+<br>
+
+온습도
+=
+앞선 7주 차 강의에서 DH11 모듈의 데이터를    
+웹페이지로 구현해 보았는데,   
+해당 강의에서는 이와 같은 내용을    
+단순화 시킨 예제를 진행할 것이다.   
+
+<br>
+
+![NKakaoTalk_20240418_150343592](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/2e048857-53b7-4d40-bca4-816c3ad58279)
+![N스크린샷 2024-04-18 111701](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/9e54e8f8-4428-4ab1-90ff-bdc397f3884e)   
+온습도 예제를 위한 준비물 및 회로 연결은 이전과 같으며,   
+예제를 실행시키기 위한 코드는 다음과 같다.   
+
+<br>
+
+```
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebSrv.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+
+#define DHTPIN 18     // DHT 센서에 연결된 디지털 핀
+#define DHTTYPE DHT11    
+
+// 온습도 센서 객체 생성
+DHT dht(DHTPIN, DHTTYPE);
+
+// 80번 포트에서 AsyncWebServer 객체 생성
+AsyncWebServer server(80);
+
+// DHT 온도 읽기 함수
+String readDHTTemperature() {
+  // 센서 읽기는 최대 2초가 소요될 수 있습니다. (센서가 매우 느립니다.)
+  // 기본값으로 섭씨로 온도 읽기
+  float t = dht.readTemperature();
+  // 화씨로 온도 읽으려면 매개 변수를 true로 설정
+  //float t = dht.readTemperature(true);
+  // 읽기 실패 시 조기에 종료하고 다시 시도합니다.
+  if (isnan(t)) {
+    Serial.println("DHT 센서에서 읽기 실패!");
+    return "--";
+  }
+  else {
+    Serial.println(t);
+    return String(t);
+  }
+}
+
+// DHT 습도 읽기 함수
+String readDHTHumidity() {
+  // 센서 읽기는 최대 2초가 소요될 수 있습니다. (센서가 매우 느립니다.)
+  float h = dht.readHumidity();
+  if (isnan(h)) {
+    Serial.println("DHT 센서에서 읽기 실패!");
+    return "--";
+  }
+  else {
+    Serial.println(h);
+    return String(h);
+  }
+}
+
+void setup(){
+  // 디버깅용 시리얼 포트 설정
+  Serial.begin(115200);
+
+  dht.begin();
+
+  // Wi-Fi 연결
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Wi-Fi에 연결 중...");
+  }
+
+  // ESP32 로컬 IP 주소 출력
+  Serial.println(WiFi.localIP());
+
+  // 루트(/) 웹 페이지 라우팅
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    String temperature = readDHTTemperature();
+    String humidity = readDHTHumidity();
+    String response = "온도 " + temperature + "\n습도 " + humidity;
+    request->send(200, "text/plain; charset=utf-8", response);
+  });
+
+  // 서버 시작
+  server.begin();
+}
+
+void loop(){
+}
+```
+<br>
+
+기존의 인터넷 설정 역시 동일하다.   
+[Week5_ESP32WebServer1](https://github.com/YooJeongJick/smartDevicePractice_2024/wiki/Week5_ESP32WebServer1) (예제 > 기본)      
+```
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+```
+
+<br>
+
+이에 대한 실행 결과는 아래와 같다.   
+![N스크린샷 2024-04-19 210100](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/6396d87a-039f-4b22-a555-56b3612c7711)   
+
+<br>
+
+앞서 제공받은 IP를 브라우저 주소 입력창에 작성하면 된다.       
+해당 예제에서는 크롬 브라우저를 사용하였다.   
+![N스크린샷 2024-04-29 190547](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/23f23c5a-81b0-4522-b2b8-37bf9a543af0)   
+
+<br>
+
+단, 온습도 변화가 자동으로 적용되었던 지난 예제와는 달리   
+이번 예제는 새로고침을 통해 직접 동기화를 시켜야 한다.   

@@ -1,0 +1,640 @@
+목차
+=
+- 정의
+  - IP 주소
+  - 도메인
+  - DNS
+  - 포트
+  - 공유기
+  - 포트 포워딩
+
+- 예제
+  - LED1
+  - LED2
+  - 온습도
+
+<br>
+<br>
+
+정의
+=
+IP주소
+-
+IP는 (Internet Protocol)의 약자이다.   
+프로토콜이 약속, 즉 규약의 의미이기에   
+<U>IP란 인터넷 통신을 위해 지켜야 할 규약을 의미한다.   
+이와 같은 규약을 지킨 주소가</U> **IP** 주소인데,   
+집 주소를 통해 택배를 보낼 수 있듯이   
+IP 주소를 통해선 데이터를 보낼 수 있다.   
+
+<br>
+
+IP 주소는 '192.168.103.176'처럼 숫자와 '.'으로 이루어져 있으며,   
+숫자는 0부터 255 사이의 값을 가진다.   
+
+<br>
+<br>
+
+도메인
+-
+그러나 IP 주소는 사용자가 인식하기엔 복잡하다는 단점이 있는데,   
+이를 <U>알기 쉬운 영문으로 표현한 주소를</U> **도메인 주소**라 정의한다.   
+
+<br>
+
+전화번호를 외우는 대신 연락처의 이름을 통해 통화하는 것처럼   
+즉, 연락처의 이름 역할을 하는 것이 도메인 주소다.   
+
+<br>
+
+널리 알려진 도메인 주소로는    
+google.com, naver.com 등이 있다.   
+
+<br>
+<br>
+
+DNS
+-
+앞선 도메인 주소는 사용자의 입장에서 정의되었기 때문에,   
+이를 <U>컴퓨터가 인식하기 위해선 도메인 주소에서 IP 주소로 변경하는 과정이 필요하다.   
+위와 같은 작업을 담당하는 시스템이</U> **DSN**으로, (domain name system)의 약자이다.   
+
+<br>
+<br>
+
+포트
+-
+그러나 사용자의 컴퓨터에는 여러 프로그램이 있으며,   
+각각의 프로그램은 인터넷이 연결되어 있을 수 있다.   
+즉, IP주소만으로 접속 시 구분상의 문제가 발생할 수 있는데,   
+이를 위해 사용되는 <U>식별 번호가</U> **포트**로   
+<U>데이터 접속 통로의 역할을 한다.</U>   
+
+<br>
+<br>
+
+공유기
+-
+또한 IP주소의 수는 한정되어 있기 때문에,   
+인터넷 사용자의 증가에 따른 IP 주소 부족 문제가 발생하게 되었다.   
+
+<br>
+
+이와 같은 문제의 해결 방안 중 하나가 **사설 IP**인데,   
+<U>특정 장치에 의해 할당되는 내부 IP 주소를 의미한다.</U>   
+
+<br>
+
+주소 중복 시 외부에서 접근할 때 오류가 발생하지만   
+사설 IP 주소는 내부 네트워크에서만 사용되기 때문에       
+다른 네트워크의 IP 주소와 중복되어도 문제없다.   
+즉, 각각의 고유한 IP를 부여할 필요가 없음으로       
+IP 주소 부족 문제를 해결할 수 있다.   
+
+<br>
+
+이와 같은 <U>사설 IP를 할당하는 대표적인 기기가</U> 바로 **공유기**다.   
+
+<br>
+<br>
+
+포트 포워딩
+-
+**포트 포워딩**이란, 외부에서 이와 같은 공유기에 접속했을 때   
+<U>외부 IP의 포트를 내부 IP의 포트에 연결하는 과정을 의미한다.</U>      
+다시 말해, <U>서로 통신할 수 있도록 포트를 개방한다.</U>      
+
+<br>
+
+이와 같은 과정이 없이 외부 IP가 접속을 시도하면   
+접근해야 하는 내부 IP를 알 수 없기 때문에 통신할 수 없다.   
+
+<br>
+<br>
+
+예제
+=
+앞선 5주 차 강의에서 ESP32를 통해       
+웹 페이지를 제공받을 수 있음을 배웠는데,      
+해당 강의에서는 이와 같은 내용과 ESP32의 모듈을 활용해      
+웹페이지와 모듈을 연결시키는 예제를 진행할 것이다.   
+
+<br>
+
+LED1
+-
+LED1 예제는 ESP32의 내장 LED를 제어하는   
+웹페이지를 구현하는 활동이다.   
+
+<br>
+
+실행에 앞서, ESPAsyncWebSrv 라이브러리를 설치한다.   
+![N스크린샷 2024-04-18 111331](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/e2d82f4a-5ee7-40ae-931d-7cdae82b0aa0)   
+
+<br>
+    
+예제를 실행시키기 위한 코드는 다음과 같다.   
+```
+// Import required libraries
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebSrv.h>
+
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+
+// 현재 출력 상태를 저장하는 보조 변수
+String output2State = "off";
+
+// GPIO 핀에 출력 변수 할당
+const int output2 = 2;
+
+// Create AsyncWebServer object on port 80
+AsyncWebServer server(80);
+
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <style>
+    html { font-family: Helvetica; display: inline-block; 
+            margin: 0px auto; text-align: center; }
+    .button { background-color: #4CAF50; border: none; 
+              color: white; padding: 16px 40px; text-decoration: none; 
+              font-size: 30px; margin: 2px; cursor: pointer; }
+    .button2 { background-color: #555555; }
+  </style>
+</head>
+<body>
+  <h1>ESP32 웹 서버</h1>
+  <p>GPIO 2 - 상태 %STATE%</p>
+  %BUTTON%
+</body>
+</html>
+)rawliteral";
+
+// Replaces placeholder with button section in your web page
+String processor(const String& var){
+  //Serial.println(var);
+  if(var == "STATE")
+  {
+    return output2State;
+  }
+  if(var == "BUTTON"){
+    String buttons = "";
+    
+    if (output2State == "off")
+    {
+      buttons += "<p><a href=\"/2/on\"> \
+                  <button class=\"button\">ON</button></a></p>";
+    }
+    else
+    {
+      buttons += "<p><a href=\"/2/off\"> \
+                  <button class=\"button button2\">OFF</button></a></p>";
+    }
+    return buttons;
+  }
+  return String();
+}
+
+void setup(){
+  // Serial port for debugging purposes
+  Serial.begin(115200);
+  delay(3000);
+
+  // 출력 변수를 출력으로 초기화
+  pinMode(output2, OUTPUT);
+  // 출력을 LOW로 설정
+  digitalWrite(output2, LOW);
+  
+  // SSID와 비밀번호로 Wi-Fi 네트워크에 연결
+  Serial.print("연결 중: ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  // 로컬 IP 주소 출력 및 웹 서버 시작
+  Serial.println("");
+  Serial.println("Wi-Fi 연결됨.");
+  Serial.println("IP 주소: ");
+  Serial.println(WiFi.localIP());
+  
+  // Route for root / web page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", index_html, processor);
+  });
+
+  // Send a GET request to <ESP_IP>/2/on 
+  server.on("/2/on", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    Serial.println("GPIO 2 ON");
+    output2State = "on";
+    digitalWrite(output2, HIGH);
+    request->send_P(200, "text/html", index_html, processor);
+  });
+
+  // Send a GET request to <ESP_IP>/2/off
+  server.on("/2/off", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    Serial.println("GPIO 2 OFF");
+    output2State = "off";
+    digitalWrite(output2, LOW);
+    request->send_P(200, "text/html", index_html, processor);
+  });
+  
+  // Start server
+  server.begin();
+}
+
+void loop() {
+}
+```
+
+<br>
+
+지난 예제와 마찬가지로, 인터넷 설정이 필수적인데   
+해당 예제의 인터넷 설정은 이전과 동일하다.    
+[Week5_ESP32WebServer1](https://github.com/YooJeongJick/smartDevicePractice_2024/wiki/Week5_ESP32WebServer1) (예제 > 기본)      
+```
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+```
+
+<br>
+
+이에 대한 실행 결과는 아래와 같다.    
+![N스크린샷 2024-04-17 151319](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/9ac98841-a961-4b6f-849e-504706cdd9de)         
+
+<br>
+
+앞서 제공받은 IP를 브라우저 주소 입력창에 작성하면 된다.      
+해당 예제에서는 모바일 크롬을 사용하였다.   
+![NKakaoTalk_20240419_214534276](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/4b3e1946-c8e0-4412-8c5a-66c2128b6ad1)   
+![NKakaoTalk_20240419_214534276_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/7f14bc5c-0705-40b4-85fb-b0c0046e296b)   
+결과를 통해 알 수 있듯,  내장 LED의 상태에 따라 URL의 내용이 달라진다.
+
+<br>
+
+만약, 해당 예제 실행 시 오류가 발생한다면   
+ESP32 버전을 다음과 같이 변경하여 해결할 수 있다.    
+![N스크린샷 2024-04-18 111350](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/6b86e9a9-4793-47ec-b487-183c74bbe3d6)      
+
+<br>
+<br>
+
+LED2
+-
+LED2 예제는 앞선 LED1 예제와 마찬가지로,      
+ESP32의 내장 LED를 제어하는 웹페이지를 구현하는 활동이다.       
+text/html 대상이었던 지난 예제들과는 달리 text/plain 대상인 것이 특징이다.   
+
+<br>
+
+실행에 앞서, ESPAsyncWebServer 라이브러리를 설치한다.   
+![N스크린샷 2024-04-19 220427](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/935e4e82-ddab-4d04-aa45-62227c12d6ce)   
+
+<br>
+
+예제를 실행시키기 위한 코드는 다음과 같다.
+```
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+
+const char* ssid = "WEBSERVER";          // WiFi 네트워크 이름
+const char* password = "20240403";  // WiFi 비밀번호
+
+String output2State = "off";  // GPIO 핀의 초기 상태
+const int output2 = 2;        // GPIO 핀 번호
+
+AsyncWebServer server(80);    // 서버 포트 설정
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(output2, OUTPUT);   // GPIO 핀을 출력으로 설정
+  digitalWrite(output2, LOW); // 초기 상태를 LOW로 설정
+
+  // WiFi에 연결
+  WiFi.begin(ssid, password);
+  Serial.print("WiFi 연결 중");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("연결된 WiFi 네트워크: ");
+  Serial.println(WiFi.SSID());
+  Serial.print("IP 주소: ");
+  Serial.println(WiFi.localIP());
+
+  // 루트 경로 설정
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String message = "GPIO 2 현재 상태: " + output2State;
+    request->send(200, "text/plain; charset=utf-8", message);  // Content-Type에 charset=utf-8 추가
+  });
+
+  // GPIO 핀 ON 설정 경로
+  server.on("/2/on", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    Serial.println("GPIO 2 ON");
+    output2State = "on";
+    digitalWrite(output2, HIGH);
+    String message = "GPIO 2 변경됨: ON";
+    request->send(200, "text/plain; charset=utf-8", message);  // Content-Type에 charset=utf-8 추가
+  });
+
+  // GPIO 핀 OFF 설정 경로
+  server.on("/2/off", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    Serial.println("GPIO 2 OFF");
+    output2State = "off";
+    digitalWrite(output2, LOW);
+    String message = "GPIO 2 변경됨: OFF";
+    request->send(200, "text/plain; charset=utf-8", message);  // Content-Type에 charset=utf-8 추가
+  });
+
+  server.begin();  // 웹 서버 시작
+}
+
+void loop() {
+}
+```
+
+<br>
+
+앞선 예제와 마찬가지로, 인터넷 설정이 필수적인데
+해당 예제의 인터넷 설정 역시 동일하다.
+```
+const char* ssid = "WEBSERVER";          // WiFi 네트워크 이름
+const char* password = "20240403";  // WiFi 비밀번호
+```
+<br>
+
+이에 대한 실행 결과는 아래와 같다.   
+![N스크린샷 2024-04-19 212129](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/552bf3de-8883-4ecd-8f94-089637ef2148)   
+
+<br>
+
+앞서 제공받은 IP를 브라우저 주소 입력창에 작성하면 된다.   
+해당 예제에서는 모바일 크롬을 사용하였다.      
+![NKakaoTalk_20240419_214534276_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/c3e0b3bc-82a9-4f0d-b48e-c18d47f6bf0f)   
+![NKakaoTalk_20240419_214534276_04](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/5743a8ad-ecbb-4a9e-91be-88696469817c)   
+![NKakaoTalk_20240419_214534276_05](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/93850351-ebe9-4984-9ab4-e123f0bc0d9b)   
+
+<br>
+<br>
+
+온습도
+-
+온습도 예제는 DH11 모듈의 데이터를  
+웹페이지로 구현하는 활동이다.   
+> DH11 모듈은 온도와 습도를 측정하기 위해 사용되는 디지털 센서이다.   
+
+<br>
+
+![NKakaoTalk_20240418_150343592](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/fac0ca51-7cdf-445f-932c-9ec71e2d00ef)
+![N스크린샷 2024-04-18 111701](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/db43bada-5fc9-4352-8997-81ecb7b2c0cc)   
+온습도 예제를 위한 준비물 및 회로 연결은 이러하고,   
+실행에 앞서, DHT sensor library by Adafruit 라이브러리를 설치한다.   
+
+<br>
+
+![스크린샷 2024-04-18 112020](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/53421f5a-a4ae-4a49-a6e1-827b16cf64c4)   
+본격적으로 예제를 실행시키기 전에,   
+DH11 모듈의 작동 확인을 위해 다음 코드를 작성한다.   
+
+<br>
+
+```
+#include <DHT.h>
+
+#define DHTPIN 18          // DHT11 센서에 연결된 핀 번호
+#define DHTTYPE DHT11     // DHT 센서 유형
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+}
+
+void loop() {
+  delay(2000);  // 2초마다 센서 값을 읽습니다.
+
+  // 온도 및 습도 값 읽기
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  // 센서 값 출력
+  Serial.print("온도: ");
+  Serial.print(temperature);
+  Serial.print(" °C, 습도: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+}
+```
+
+<br>
+
+이에 대한 실행 결과는 아래와 같다.   
+![스크린샷 2024-04-18 112217](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/59279a18-16bc-4382-8178-eac5f62b04b9)         
+
+<br>
+
+앞선 내용을 기반으로, 예제를 실행시키기 위한 코드는 다음과 같다.      
+```
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebSrv.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+
+#define DHTPIN 18     // DHT 센서에 연결된 디지털 핀
+#define DHTTYPE DHT11    
+
+// 온습도 센서 객체 생성
+DHT dht(DHTPIN, DHTTYPE);
+
+// 80번 포트에서 AsyncWebServer 객체 생성
+AsyncWebServer server(80);
+
+// DHT 온도 읽기 함수
+String readDHTTemperature() {
+  // 센서 읽기는 최대 2초가 소요될 수 있습니다. (센서가 매우 느립니다.)
+  // 기본값으로 섭씨로 온도 읽기
+  float t = dht.readTemperature();
+  // 화씨로 온도 읽으려면 매개 변수를 true로 설정
+  //float t = dht.readTemperature(true);
+  // 읽기 실패 시 조기에 종료하고 다시 시도합니다.
+  if (isnan(t)) {
+    Serial.println("DHT 센서에서 읽기 실패!");
+    return "--";
+  }
+  else {
+    Serial.println(t);
+    return String(t);
+  }
+}
+
+// DHT 습도 읽기 함수
+String readDHTHumidity() {
+  // 센서 읽기는 최대 2초가 소요될 수 있습니다. (센서가 매우 느립니다.)
+  float h = dht.readHumidity();
+  if (isnan(h)) {
+    Serial.println("DHT 센서에서 읽기 실패!");
+    return "--";
+  }
+  else {
+    Serial.println(h);
+    return String(h);
+  }
+}
+
+// 인덱스 HTML 페이지
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" 
+    href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" 
+    integrity=
+    "sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" 
+    crossorigin="anonymous">
+  <style>
+    html {
+      font-family: Arial;
+      display: inline-block;
+      margin: 0px auto;
+      text-align: center;
+    }
+    h2 { font-size: 3.0rem; }
+    p { font-size: 3.0rem; }
+    .units { font-size: 1.2rem; }
+    .dht-labels {
+      font-size: 1.5rem;
+      vertical-align: middle;
+      padding-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h2>ESP32 DHT Server</h2>
+  <p>
+    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
+    <span class="dht-labels">온도</span>
+    <span id="temperature">%TEMPERATURE%</span>
+    <sup class="units">&deg;C</sup>
+  </p>
+  <p>
+    <i class="fas fa-tint" style="color:#00add6;"></i>
+    <span class="dht-labels">습도</span>
+    <span id="humidity">%HUMIDITY%</span>
+    <sup class="units">&percnt;</sup>
+  </p>
+</body>
+<script>
+setInterval(function() {
+  // XMLHttpRequest 객체를 사용하여 "/temperature" 엔드포인트로 GET 요청을 전송
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      // 요청이 완료되고 성공적인 응답을 받았을 때, 온도 값을 업데이트합니다.
+      document.getElementById("temperature").innerHTML = this.responseText;
+    }
+  };
+  xhttp.open("GET", "/temperature", true);
+  xhttp.send();
+}, 2000); // 2초 간격으로 업데이트합니다.
+
+setInterval(function() {
+  // XMLHttpRequest 객체를 사용하여 "/humidity" 엔드포인트로 GET 요청을 전송
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      // 요청이 완료되고 성공적인 응답을 받았을 때, 습도 값을 업데이트합니다.
+      document.getElementById("humidity").innerHTML = this.responseText;
+    }
+  };
+  xhttp.open("GET", "/humidity", true);
+  xhttp.send();
+}, 2000); //2초 간격으로 업데이트합니다.
+</script>
+</html>
+)rawliteral";
+
+// 플레이스홀더를 DHT 값으로 대체하는 함수
+String processor(const String& var){
+  if(var == "TEMPERATURE"){
+    return readDHTTemperature();
+  }
+  else if(var == "HUMIDITY"){
+    return readDHTHumidity();
+  }
+    return String();
+}
+
+void setup(){
+  // 디버깅용 시리얼 포트 설정
+  Serial.begin(115200);
+
+  dht.begin();
+
+  // Wi-Fi 연결
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Wi-Fi에 연결 중...");
+}
+
+// ESP32 로컬 IP 주소 출력
+Serial.println(WiFi.localIP());
+
+// 루트(/) 웹 페이지 라우팅
+server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+  request->send_P(200, "text/html", index_html, processor);
+});
+
+// "/temperature" 엔드포인트에 대한 GET 요청 처리
+server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
+  request->send_P(200, "text/plain", readDHTTemperature().c_str());
+});
+
+// "/humidity" 엔드포인트에 대한 GET 요청 처리
+server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request){
+  request->send_P(200, "text/plain", readDHTHumidity().c_str());
+});
+
+// 서버 시작
+server.begin();
+}
+
+void loop(){
+
+}
+```
+<br>
+
+앞선 예제들 마찬가지로, 인터넷 설정이 필수적인데   
+해당 예제의 인터넷 설정 역시 동일하다.   
+```
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+```
+
+<br>
+
+이에 대한 실행 결과는 아래와 같다.      
+![N스크린샷 2024-04-19 210100](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/5c5e379e-0fbb-447e-9e29-8e81fde7cec8)
+
+<br>
+
+앞서 제공받은 IP를 브라우저 주소 입력창에 작성하면 된다.   
+해당 예제에서는 모바일 크롬을 사용하였다.   
+![NKakaoTalk_20240419_214534276_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/3253e5e8-a034-446e-9b5b-a05106b9d3ba)   
