@@ -1,0 +1,408 @@
+목차
+=
+- MQTT
+- 초음파센서
+- 능동부저
+
+<br>
+<br>
+
+MQTT
+=
+<u>MQTT는 프로토콜의 한 종류로,   
+(Message Queuing Telemetry Transport)의 약자이다.</u>   
+
+<br>
+
+웹 데이터를 전송하는 HTTP와는 달리,   
+**짧은 메시지**를 전송하는 것에 특화되어 있기에 빠르다.   
+또한 **낮은 대역폭**을 대상으로 하며 **지속적인 연결**을 지향하기에,   
+느리고 품질이 낮은 네트워크에서도 안정적인 전송이 가능하다.   
+
+<br>
+
+MQTT의 이와 같은 특징으로 인하여    
+소량의 측정 데이터를 주기적으로 받는 IoT 분야에서 주로 사용된다.   
+
+<br>
+
+그러나 MQTT는 브로커라 정의되는 **중계장치**가 있어야 하는데,   
+이는 브로커 서비스를 제공하는 회사를 통해 사용할 수 있다.   
+해당 강의에서는 MQTT Broker Mosquitto 서비스를 이용하였다.   
+
+<br>
+<br>
+
+초음파센서
+=
+초음파센서는 거리를 측정하는 센서로, 대상에 보낸 초음파가    
+반사되어 돌아오는 시간을 측정함으로써 작동한다.   
+해당 예제에서는 초음파센서를  ESP32에 연결하고,   
+MQTT 프로토콜을 활용해 측정값을 확인할 것이다.   
+
+<br>
+
+![KakaoTalk_20240512_095155013](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/0db10fee-8c83-4166-b7ab-0609717c420d)
+![KakaoTalk_20240512_094654312](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/eda4368f-5846-4d1e-88de-8f5b291b92fc)   
+준비물 및 회로 연결은 이와 동일하다.   
+실행에 앞서, 초음파센서의 작동 확인을 위해 다음 코드를 작성한다.   
+
+<br>
+
+```
+const int trigPin = 12;  // 초음파 센서의 트리거 핀
+const int echoPin = 14;  // 초음파 센서의 에코 핀
+
+long duration;          // 음파의 왕복 시간(마이크로초)
+float distanceCm;       // 거리(cm)
+float distanceInch;     // 거리(인치)
+
+void setup() {
+  Serial.begin(115200); // 시리얼 통신 시작 (통신 속도: 115200bps)
+  pinMode(trigPin, OUTPUT);  // 트리거 핀을 출력으로 설정
+  pinMode(echoPin, INPUT);   // 에코 핀을 입력으로 설정
+}
+
+void loop() {
+  digitalWrite(trigPin, LOW);           // 트리거 핀 LOW로 초기화
+  delayMicroseconds(2);                 // 2 마이크로초 대기
+  digitalWrite(trigPin, HIGH);          // 트리거 핀 HIGH로 설정하여 초음파 송신
+  delayMicroseconds(10);                // 10 마이크로초 동안 
+  digitalWrite(trigPin, LOW);           // 초음파 송신 종료
+  
+  duration = pulseIn(echoPin, HIGH);     // 에코 핀에서 초음파의 왕복 시간 측정
+  
+  distanceCm = duration * 0.034/2; // 거리 계산
+  
+  distanceInch = distanceCm * 0.393701; // 인치로 변환
+  
+  Serial.print("Distance: ");
+  Serial.print(distanceCm);              // 거리 (cm)
+  Serial.print("(cm)  ");
+  Serial.print(distanceInch);            // 거리 (인치)
+  Serial.println("(inch)");
+  
+  delay(1000);                           // 1초 대기
+}
+```
+
+<br>
+
+이에 대한 실행 결과는 아래와 같다.   
+![스크린샷 2024-05-11 144114](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/7f5d7d09-718f-415e-8402-847ae6586ffd)      
+
+<br>
+
+본격적으로 예제를 실행시키기 전에,      
+PubSubClient by Nick O’Leary 라이브러리를 설치한다.   
+![KakaoTalk_20240512_161544623](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/ba1249cc-1d95-4ce8-8945-73c4e5019e23)      
+
+<br>
+
+예제를 실행시키기 위한 코드는 다음과 같다.
+```
+#include <WiFi.h>          //Wi-Fi 연결 관련 라이브러리
+#include <PubSubClient.h>  //MQTT 프로토콜을 사용하기 위한 라이브러리
+
+const char* ssid = "WEBSERVER";          // 사용하는 WiFi 네트워크 이름 (SSID)
+const char* password = "20240403";  // 사용하는 WiFi 네트워크 비밀번호
+
+const int trigPin = 12;  // 초음파 센서의 트리거 핀
+const int echoPin = 14;  // 초음파 센서의 에코 핀
+
+const char* mqtt_server = "test.mosquitto.org";
+const int mqttPort = 1883;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+long lastMsgTime = 0;
+
+void setup() {
+  Serial.begin(115200);
+  setup_wifi();
+  client.setServer(mqtt_server, mqttPort);
+
+  pinMode(echoPin, INPUT);  // 에코 핀을 입력으로 설정
+  // 트리거 핀 초기화
+  pinMode(trigPin, OUTPUT);
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+}
+
+void setup_wifi() {
+  delay(10);
+  // Wi-Fi 네트워크에 연결 시작
+  Serial.println();
+  Serial.print("연결 중인 Wi-Fi: ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("Wi-Fi 연결됨");
+  Serial.println("IP 주소: ");
+  Serial.println(WiFi.localIP());
+}
+
+void reconnect() {
+  // 연결이 될 때까지 반복
+  while (!client.connected()) {
+    Serial.print("MQTT 연결 시도 중...");
+    // 랜덤 클라이언트 ID 생성
+    String clientId = "ESP32Client-";
+    clientId += String(random(0xffff), HEX);
+    Serial.print("클라이언트 ID: ");
+    Serial.println(clientId);
+    // 연결 시도
+    if (client.connect(clientId.c_str())) {
+      Serial.println("연결됨");
+    } else {
+      Serial.print("실패, rc=");
+      Serial.print(client.state());
+      Serial.println(" 5초 후 다시 시도");
+      // 5초 대기 후 다시 시도
+      delay(5000);
+    }
+  }
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  // 클라이언트가 메시지를 처리하고 서버와 연결 유지
+  client.loop();
+
+  long now = millis();
+  if (now - lastMsgTime > 1000) {  //1초 간격
+    lastMsgTime = now;
+    // 초음파 센서 값을 읽어옵니다.
+    float sensorValue = readUltrasonicSensor();
+    char sensorString[8];
+    dtostrf(sensorValue, 1, 2, sensorString);
+    client.publish("user/esp32/ultra", sensorString);
+  }
+}
+
+float readUltrasonicSensor() {
+  // 트리거 핀을 10 마이크로초 동안 HIGH로 설정하여 초음파를 발사합니다.
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // 에코 핀에서 펄스의 지속 시간을 측정합니다.
+  pinMode(echoPin, INPUT);
+  float duration = pulseIn(echoPin, HIGH);
+
+  // 소리의 속도를 기준으로 거리를 계산합니다.(343m/s로 가정)
+  float distance = duration * 0.0343 / 2.0;
+
+  return distance;
+}
+```
+<br>
+
+지난 예제와 마찬가지로, 인터넷 설정이 필수적인데   
+해당 예제의 인터넷 설정은 이전과 동일하다.    
+[Week5_ESP32WebServer1](https://github.com/YooJeongJick/smartDevicePractice_2024/wiki/Week5_ESP32WebServer1) (예제 > 기본)      
+```
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+```
+<br>
+
+이에 대한 실행 결과는 아래와 같다.   
+![KakaoTalk_20240512_161544623_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/51da773b-e076-4a4a-a087-0c27898bd9b3)   
+
+<br>
+
+이후 결과 확인을 위해 해당 앱을 설치한다.   
+![KakaoTalk_20240512_172309503](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/ab4a257b-1faa-4c3e-bec7-40cc81793900)   
+
+<br>
+
+설정 내용은 다음과 같은데,   
+Add Broker 내에 Client ID 입력란은   
+실행 결과에 따른 값을 입력하면 된다.   
+![NKakaoTalk_20240512_161544623_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/0dd01dd6-d86c-4f2e-88da-e1d93451bc6f)   
+![NKakaoTalk_20240512_161544623_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/a3041027-3ad7-4efd-bc54-ccd0f656d14e)   
+![NKakaoTalk_20240512_161544623_04](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/d0c4bbd8-5ae2-4275-95e4-1ce110d22457)   
+
+<br> 
+
+결과는 Messages 창을 통해 확인할 수 있다.   
+![NKakaoTalk_20240512_161544623_05](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/14ae0932-81d4-475e-9dff-26b1756c44d0)   
+https://www.youtube.com/watch?v=3b_JzTb9HUU   
+
+<br>
+<br>
+
+능동부저
+=
+능동부저는 전기 신호를 통해 소리를 발생시키는 부저다.   
+해당 예제에서는 능동부저를 ESP32에 연결하고,   
+MQTT 프로토콜을 활용해 부저 상태를 변경할 것이다.   
+
+<br>
+
+![KakaoTalk_20240512_164529225](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/7c4f7673-e135-443b-be83-e8026b32a963)
+![KakaoTalk_20240512_164529225_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/cc9c3d17-8fb2-4a35-bc12-90d0a5660d6c)   
+준비물 및 회로 연결은 이와 동일하다.      
+실행에 앞서, 능동부저의 작동 확인을 위해 다음 코드를 작성한다.   
+
+<br>
+
+```
+const int buzzerPin = 2; //led 핀 번호 설정
+ 
+void setup (){
+  pinMode (buzzerPin,OUTPUT );//buzzerPin 을 출력으로 설정
+}
+ 
+void loop (){
+  digitalWrite (buzzerPin, HIGH ); //buzzerPin 에 HIGH 값 쓰기
+  delay (500 ); // 0.5 초 기다리기
+  digitalWrite (buzzerPin, LOW ); //buzzerPin 에 LOW 값 쓰기
+  delay (1000 ); // 1 초 기다리기
+}
+```
+
+<br>
+
+이에 대한 실행 결과는 아래와 같다.   
+https://www.youtube.com/watch?v=bDlP3fm-rSY   
+
+<br>
+
+예제를 실행시키기 위한 코드는 다음과 같다.   
+```
+#include <WiFi.h>
+#include <PubSubClient.h>
+ 
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+
+const char* mqtt_server = "test.mosquitto.org";
+const int mqttPort = 1883 ;
+const char * mqttTopic = "user/esp32/buzzer"; // 사용자에 맞게 변경
+const int buzzerPin = 2 ; // 부저에 연결된 GPIO 핀 번호
+ 
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+void setup_wifi() {
+  delay(10);
+  // Wi-Fi 네트워크에 연결 시작
+  Serial.println();
+  Serial.print("연결 중인 Wi-Fi: ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("Wi-Fi 연결됨");
+  Serial.println("IP 주소: ");
+  Serial.println(WiFi.localIP());
+}
+ 
+void setup(){
+    // 시리얼 통신 초기화
+  Serial.begin(115200);
+  // Wi-Fi 연결 설정
+  setup_wifi();
+
+  client.setServer(mqtt_server, mqttPort);
+  client.setCallback(callback);
+ 
+  // 부저 핀을 출력 모드로 설정
+  pinMode(buzzerPin,OUTPUT);
+}
+ 
+void loop(){
+  if(!client.connected()){
+    reconnect();
+  }
+  client.loop();//MQTT 클라이언트를 유지하기 위해 호출
+}
+ 
+void callback(char*topic , byte *payload , unsigned int length){
+  Serial.print("Receivedmessage: ");
+  Serial.print(topic);
+  Serial.print(" ");
+  for(int i = 0 ; i <length;i++){
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+ 
+  if(strcmp(topic, mqttTopic)== 0){
+    if(payload[0] == '1'){
+     // 부저를 켜는 코드 작성
+     digitalWrite(buzzerPin, HIGH); 
+    }else if(payload[0] == '0'){
+     // 부저를 끄는 코드 작성
+     digitalWrite(buzzerPin, LOW); 
+    }
+  }
+}
+ 
+void reconnect(){
+  while(!client.connected()){
+    Serial.print("Connectingto MQTT Broker...");
+   String clientId = "ESP32Client-";
+   clientId += String(random(0xffff), HEX);
+    if(client.connect(clientId.c_str())){
+     Serial.println("Connected to MQTT Broker");
+     client.subscribe(mqttTopic);
+    }else {
+     Serial.print("Failed, rc=");
+     Serial.print(client.state());
+     Serial.println("Retrying in 5 seconds...");
+     delay(5000);
+    }
+  }
+}
+```
+<br>
+
+지난 예제와 마찬가지로, 인터넷 설정이 필수적인데   
+해당 예제의 인터넷 설정은 이전과 동일하다.   
+```
+const char* ssid = "WEBSERVER";
+const char* password = "20240403";
+``` 
+   
+<br>
+
+이에 대한 실행 결과는 아래와 같다.      
+![KakaoTalk_20240512_170415736_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/96907be5-061a-4118-98b3-c4351e0299da)   
+
+<br>
+
+이후 능동부저의 상태를 변경하기 위해    
+앞서 설치한 앱을 실행하고, 다음 내용을 설정한다.   
+![NKakaoTalk_20240512_170415736](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/fa981adf-33cd-4ad4-824d-2e4a63aa51a6)   
+
+<br>
+
+변경 스위치는 Publisher 창을 통해 생성할 수 있다.   
+![NKakaoTalk_20240512_170415736_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/70c64569-ca69-409e-a9f9-402a1127e3b3)   
+![NKakaoTalk_20240512_170415736_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/70fd5187-60c4-45fc-a38a-c2d638e62087)   
+
+<br>
+
+이에 대한 실행 결과는 아래와 같다.   
+https://www.youtube.com/watch?v=VTj8DPcJYSA   
+
+
+
