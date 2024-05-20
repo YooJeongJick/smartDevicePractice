@@ -55,7 +55,7 @@ Firebase의 장점은 백엔드 부문을 구현한다는 것인데
 <br>
 
 또한, 사용자 부분에서도 추가적인 설정이 필요하다.   
-이는 빌드 → Authentication 창 내에서 가능하며,   
+이는 빌드 > Authentication 창 내에서 가능하며,   
 구체적인 설정 방법은 다음과 같다.     
 ![NKakaoTalk_20240518_171253027_07](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/477fdc44-dd12-4081-b926-b7ad33bbbf4f)   
 ![NKakaoTalk_20240518_171253027_08](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/b52192b9-10ea-4a3a-9dd5-97f3c91b35ed)   
@@ -222,7 +222,7 @@ Firebase 설정값을 확인하고 적용시키는 방법은 다음과 같다.
 
 이에 대한 실행 결과는 다음과 같으며,   
 Firebase 내에 ledState 값을 변경시킴으로써   
-내장 LED 출력을 조정할 수 있다.      
+내장 LED 출력을 바꿀 수 있다.      
 ![NKakaoTalk_20240518_174520977_04](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/33335ba0-f434-4546-bf9e-e8c1967bba9a)   
 ![NKakaoTalk_20240518_174520977_05](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/e247d9e5-0418-4023-bdf9-cfaafe92514b)   
 
@@ -231,3 +231,411 @@ Firebase 내에 ledState 값을 변경시킴으로써
 
 CDS
 -
+CDS는 <u>빛 감지 센서</u>로도 불리는데,   
+빛의 양에 따라서 저항이 변경된다.   
+앞선 값을 ESP32에서 측정하기 위해선   
+0~5V 사이 전압으로 변경시켜야 하는데,   
+이는 아날로그 값으로 정의된다.   
+
+<br>
+
+CDS 예제에서는 Firebase DB 내에   
+측정값을 저장하고, 이를 다양한 방식으로 나타낼 것이다.   
+예제를 실행시키기 위한 준비물 및 회로 연결은 다음과 같다.   
+![KakaoTalk_20240519_194114267](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/2888eb6e-d715-4849-9db4-f1106756b9bc)
+![KakaoTalk_20240519_194114267_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/91a8b318-4021-46ab-830c-3d2bcd2a7a3c)
+
+<br>
+
+실행에 앞서, CDS 작동 확인 용도로 아래 코드를 작성한다.   
+```
+int sensorPin = 34;
+int value = 0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  value = analogRead(sensorPin);
+
+  Serial.println(value);
+
+  delay(500);
+}
+```
+<br>
+
+이에 대한 실행 결과는 다음과 같다.   
+![KakaoTalk_20240519_191824220](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/0d929ced-b6aa-4d80-b13b-158e77c55a2a)   
+
+<br>
+
+본격적으로 예제를 실행시키기 위한 코드는 아래와 같다.   
+```
+#include <WiFi.h>
+#include <FirebaseESP32.h>
+
+// 토큰 생성 프로세스 정보 제공
+#include "addons/TokenHelper.h"
+// RTDB 페이로드 출력 정보 및 기타 도움 함수 제공
+#include "addons/RTDBHelper.h"
+
+// Firebase 설정
+#define FIREBASE_HOST "https://esp32-led-24fc9-default-rtdb.firebaseio.com/"
+#define FIREBASE_AUTH "API"
+#define WIFI_SSID "WEBSERVER"
+#define WIFI_PASSWORD "20240403"
+
+
+// Firebase 객체 정의
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+bool signupOK = false;
+
+// 데이터베이스 주 경로
+String databasePath = "/room1";
+String sensorPath = "/lightsensor";
+String timePath = "/timestamp";
+
+/// 부모 노드 (현재 시간 정보로 매 루프마다 업데이트)
+String parentPath;
+
+int timestamp;
+FirebaseJson json;
+
+const char* ntpServer = "pool.ntp.org";
+
+// 빛 센서 핀
+int sensorPin = 34;
+
+// 타이머 변수 (새로운 측정 값을 20초마다 전송)
+unsigned long sendDataPrevMillis = 0;
+unsigned long timerDelay = 60000;  //1 minutes
+
+// WiFi 초기화
+void setup_wifi() {
+  delay(10);
+  // Wi-Fi 네트워크에 연결 시작
+  Serial.println();
+  Serial.print("연결 중인 Wi-Fi: ");
+  Serial.println(WIFI_SSID);
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("Wi-Fi 연결됨");
+  Serial.println("IP 주소: ");
+  Serial.println(WiFi.localIP());
+}
+// 현재 epoch 시간을 가져오는 함수
+unsigned long getTime() {
+  time_t now;
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    //Serial.println("Failed to obtain time");
+    return (0);
+  }
+  time(&now);
+  return now;
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  // WiFi 연결
+  setup_wifi();
+  configTime(0, 0, ntpServer);
+
+  // API 키 할당 (필수)
+  config.api_key = FIREBASE_AUTH;
+
+  // RTDB URL 할당 (필수)
+  config.database_url = FIREBASE_HOST;
+
+  Firebase.reconnectWiFi(true);
+  fbdo.setResponseSize(4096);
+
+  /* 회원 가입 */
+  if (Firebase.signUp(&config, &auth, "", "")) {
+    Serial.println("ok");
+    signupOK = true;
+  } else {
+    Serial.printf("%s\n", config.signer.signupError.message.c_str());
+  }
+
+  // 장기 실행 토큰 생성 작업에 대한 콜백 함수 할당
+  config.token_status_callback = tokenStatusCallback;
+
+  // 토큰 생성 최대 재시도 횟수 할당
+  config.max_token_generation_retry = 5;
+
+  // Firebase 인증 및 설정과 함께 라이브러리 초기화
+  Firebase.begin(&config, &auth);
+}
+
+void loop() {
+
+  // Send new readings to database
+  if (Firebase.ready() && signupOK
+      && (millis() - sendDataPrevMillis > timerDelay
+          || sendDataPrevMillis == 0)) {
+    sendDataPrevMillis = millis();
+
+    // 현재 타임스탬프 가져오기
+    timestamp = getTime();
+    Serial.print("time: ");
+    Serial.println(timestamp);
+
+    parentPath = databasePath + "/" + String(timestamp);
+
+    json.set(sensorPath.c_str(), String(analogRead(sensorPin)));
+    json.set(timePath, String(timestamp));
+    Serial.println("Set json... ");
+    if (Firebase.setJSON(fbdo, parentPath.c_str(), json))
+      Serial.println("ok");
+    else
+      Serial.println(fbdo.errorReason());
+  }
+}
+
+```
+
+<br>
+
+앞선 코드 내에선 인터넷과 Firebase 설정이 필수적이며,   
+인터넷 설정은 위와 예제와 동일하다.   
+```
+#define WIFI_SSID "WEBSERVER"
+#define WIFI_PASSWORD "20240403"
+```
+
+<br>
+
+Firebase 설정값을 확인하고 적용하는 방법은 다음과 같다.   
+![NKakaoTalk_20240518_174520977_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/a2535976-c1d9-4bd1-b09e-74aeaef70e3d)   
+![NKakaoTalk_20240518_174520977_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/99f4a4bf-59ca-41c0-814b-7cbe18b4a07b)   
+![NKakaoTalk_20240518_174520977_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/80788285-2e60-4d26-a188-3cc082d1fd03)   
+```
+#define FIREBASE_HOST "https://esp32-led-24fc9-default-rtdb.firebaseio.com/"
+#define FIREBASE_AUTH "API"
+```
+
+<br>
+
+이에 대한 실행 결과는 아래와 같다.   
+![NKakaoTalk_20240519_194315800](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/aa94894d-c9f5-4492-b9bb-06f5c037e6f1)   
+
+<br>
+
+앞선 실행 결과는 Firebase 앱으로 표현할 수 있는데,   
+이를 위해선 공식 홈페이지 내 앱 등록이 필요하다.   
+등록 방법은 다음과 같다.   
+![NKakaoTalk_20240519_194315800_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/71c4798f-86af-4b76-a788-a4c4d5ad33a2)   
+![NKakaoTalk_20240519_194315800_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/6d9c3a04-2a81-4ccd-8cd0-c7817bc9c3b6)   
+![NKakaoTalk_20240519_202525133](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/e3e84d0e-bd57-4c46-9114-b474237e419e)   
+
+<br>
+
+위에 표시된 firebaseConfig 값을 복사하고, 아래 코드에 적용한다.   
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>ESP 데이터 기록 Firebase 앱</title>
+    <style>
+        #chart_div {
+            width: 1200px;
+            height: 500px;
+        }
+
+        #gauge_div {
+            height: 300px;
+        }
+
+        div {
+            display: table;
+            margin-right: auto;
+            margin-left: auto;
+        }
+    </style>
+    <!-- Firebase SDK 포함 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+    <!-- 필요한 Firebase 기능만 포함 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+    // 웹 앱의 Firebase 구성
+    // 복사한 값 적용 위치
+    const firebaseConfig = {
+        apiKey: "",
+        authDomain: "",
+        databaseURL: "",
+        projectId: "",
+        storageBucket: "",
+        messagingSenderId: "",
+        appId: ""
+    };
+
+    // Firebase 초기화
+    firebase.initializeApp(firebaseConfig);
+
+    // 인증과 데이터베이스 참조 생성
+    const auth = firebase.auth();
+    const db = firebase.database();
+    </script>
+</head>
+<body>
+    <!-- 차트를 위한 컨테이너 -->
+    <div>
+        <div id="chart_div"></div>
+    </div>
+    <div>
+        <div id="gauge_div"></div>
+    </div>
+    <script type="text/javascript"
+            src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+        // 현재 차트 패키지 로드
+        google.charts.load('current', {
+        packages: ['corechart', 'line', 'gauge'],
+        });
+		    // API가 로드되었을 때 콜백 함수 설정
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+    // 기본 값으로 데이터 객체 생성
+    let data = google.visualization.arrayToDataTable([
+    ['Time', 'Light Sensor'],
+    ["00:00", 0],
+    ]);
+
+    let gauge_data = google.visualization.arrayToDataTable([
+    ['Light Sensor'],
+    [0],
+    ]);
+
+    // 제목, 색상 등이 포함된 옵션 객체 생성
+    let options = {
+    max: 2048, //4096,
+    hAxis: {
+    //textPosition: 'none',
+    },
+    vAxis: {
+
+    },
+    };
+
+    // 차트 그리기
+    let chart = new google.visualization.LineChart(
+    document.getElementById('chart_div')
+    );
+    chart.draw(data, options);
+
+    let gauge_chart = new google.visualization.Gauge(
+        document.getElementById('gauge_div')
+    );
+    gauge_chart.draw(gauge_data, options);
+
+    // 데이터베이스 경로
+    var dbPath = 'room1';
+
+    // 데이터베이스 참조
+    var dbRef = firebase.database().ref(dbPath);
+
+    // 표시할 최대 데이터 행 수
+    let maxDatas = 50;
+
+    // 최신 측정값 가져와서 차트에 표시 (표시되는 측정값 수는 chartRange 값에 해당)
+    dbRef.orderByKey().limitToLast(maxDatas).on('child_added', snapshot =>{
+    var jsonData = snapshot.toJSON(); // 예: {lightsensor: 2502, timestamp:1641317355}
+
+    // 값 저장
+    var lightsensor = Number(jsonData.lightsensor);
+    var timestamp = epochToDateTime(jsonData.timestamp);
+
+    // 차트에 값 표시
+    if (data.getNumberOfRows() > maxDatas) {
+    data.removeRows(0, data.getNumberOfRows() - maxDatas);
+    }
+    data.addRow([timestamp, lightsensor]);
+    chart.draw(data, options);
+
+    gauge_data.setValue(0, 0, lightsensor);
+    gauge_chart.draw(gauge_data, options);
+    });
+    }
+    // 에포크 Time을 JavaScript Date 객체로 변환
+    function epochToJsDate(epochTime){
+    return new Date(epochTime*1000);
+    }
+
+    // Time을 사람이 읽을 수 있는 형식 (HH:MM)으로 변환
+    function epochToDateTime(epochTime) {
+    var epochDate = new Date(epochToJsDate(epochTime));
+    var dateTime =
+    ("00" + epochDate.getHours()).slice(-2) +
+    ":" +
+    ("00" + epochDate.getMinutes()).slice(-2);
+    return dateTime;
+    }
+    </script>
+</body>
+</html>
+```
+
+<br>
+
+이후, 앞선 코드를 브라우저 창에서 열어주는데   
+해당 예제에서는 크롬 브라우저를 사용하였다.   
+![NKakaoTalk_20240519_194315800_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/9fa45a54-b277-4a8a-b94a-7de3c649c092)   
+![KakaoTalk_20240519_193653140](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/f68268e6-0b1f-4f43-87c6-f0c2ae010ea7)   
+   
+<br>
+<br>
+
+CLI
+-
+Firebase는 앱의 공간적 제약을 확장하는 호스팅을 지원하는데,   
+이는 FIrebase CLI 내에서 설정할 수 있다.   
+CLI는 (Command-Line Interface)의 약자로,   
+명령어를 통한 프로젝트의 관리를 돕는다.   
+이와 같은 CLI 설치 방법은 다음과 같다.   
+![NKakaoTalk_20240519_194530836](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/928a7e37-bed4-42d0-9943-13666fd02fc0)   
+![NKakaoTalk_20240519_194530836_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/f9027847-9826-4f67-8632-301fdf3481f0)   
+
+<br>
+
+설정 방법은 아래와 같은데,   
+파란 글씨와 밑줄에 해당하는 값을 똑같이 입력한다.   
+![NKakaoTalk_20240519_194530836_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/bf52f137-fb5b-42ef-92ad-8ab17a0706b6)   
+![NKakaoTalk_20240519_194530836_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/0a065ada-35c4-4128-a442-001ee01c97c3)   
+
+<br>
+
+이 과정에서, CDS 예제에서 작성한 앱 코드값이 담긴   
+파일을 복사하여 public 폴더에 붙여 넣는다.   
+![NKakaoTalk_20240519_194530836_04](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/93ab7092-1c19-4817-9421-07c51f72fe09)   
+
+<br>
+
+이후, 다음 명령어를 사용해 앱 호스팅을 진행한다.   
+![NKakaoTalk_20240519_194530836_05](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/54b031b9-8a57-43db-84b4-5dcc0876d6c3)   
+
+<br>
+
+위 화면에서 언급된 Hosting URL을 통해 접속이 가능하며,   
+해당 예제에서는 크롬 브라우저를 사용하여 이를 확인했다.   
+![N스크린샷 2024-05-18 122950](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/b295b0e0-4223-46d3-8ebb-ae7779010c12)   
