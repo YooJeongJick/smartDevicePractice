@@ -1,0 +1,258 @@
+목차
+=
+- AWS
+   - 차이
+
+- ArduinoCloud
+
+- NTP
+  - 정의
+  - 예제
+
+<br>
+<br>
+
+AWS
+=
+앞선 강의에서 활용한 Firebase 외에도   
+여러 클라우드 서비스 제공 플랫폼이 존재하는데,   
+그중 대표적인 것이 바로 AWS이다.   
+
+<br>
+
+AWS란 (Amazon Web Services)의 약자로,   
+Firebase와 마찬가지로 <u>개발을 지원하는 플랫폼이다.</u>    
+
+<br>
+<br>
+
+차이
+-
+이렇듯 Firebase와 AWS는 모두 클라우드 서비스를 제공하지만,   
+각 플랫폼만의 특징이 존재하기에 차이점이 있다.   
+
+<br>
+
+**Firebase** 서비스는 <u>모바일 및 앱이 주된 대상인 반면에,</u>   
+**AWS** 서비스는 상대적으로 대상이 광범위하다.   
+해당 강의에 속하는 IoT 분야 역시 AWS가 주가 된다.  
+
+<br>
+
+하지만 **AWS** 서비스가 다양한 서비스를 제공하는 만큼   
+이를 활용하기 위해선 사용자의 학습이 요구되는데,   
+**Firebase** 서비스는 비교적 <u>쉽고 간단하게 서비스를 사용할 수 있다.</u>   
+
+<br>
+
+또한 두 플랫폼은 가격 정책에도 차이가 존재한다.   
+**AWS** 서비스는 <u>장기간 무료 서비스를 제공</u> 하는 대신   
+해당 기간이 지나면 무자본 활용이 어렵다.   
+반면 **Firebase** 서비스는 기간 제한 없이 
+<u>일부 사용량에 대해선 무료 제공이 가능하다는 특징이 있는데,</u>   
+지정량을 초과하면 사용량에 대비해 요금을 지불해야 한다.   
+
+<br>
+
+이와 같은 특징으로 **Firebase** 서비스는 <u>소규모 프로젝트에,</u>   
+**AWS** 서비스는 <u>대규모 프로젝트에</u> 적합하다고 여겨진다,   
+
+<br>
+<br>
+
+ArduinoCloud
+=
+앞서 언급한 Firebase와 AWS 외에도 다양한 서비스가 존재하는데,   
+이번 강의에서는 아두이노에서 제공하는 IoT Cloud 서비스를 활용해   
+LED 제어 및 온도, 습도 데이터 모니터링 해볼 것이다.   
+
+<br>
+
+해당 실습을 위한 준비물 및 회로 연결은 다음과 같다.   
+![KakaoTalk_20240525_213908508](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/519fd9d6-923f-4b75-b055-78802e00fef2)
+![KakaoTalk_20240526_215809477](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/228c004d-9316-4e74-ab42-b44fcad5d4d6)
+
+<br>
+
+예제 실행에 앞서 ArduinoCloud 서비스에 대한 추가 설정이 필요한데,   
+이를 위해 ArduinoCloud 공식 홈페이지에 접속 및 로그인해야 한다. (https://cloud.arduino.cc)   
+![NKakaoTalk_20240525_213908508_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/1287d562-e6da-4457-b0d6-b702c1ab28bb)   
+
+<br>
+
+프로젝트 추가 방법은 다음과 같다.   
+![NKakaoTalk_20240525_213908508_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/959cd2f2-43da-44ef-9f12-9edc2c8ba4c5)   
+
+<br>
+
+이후 프로젝트 내에 센서를 제어하기 위한    
+변수를 추가해야 하는데, 설정 방법은 다음과 같다.   
+![NKakaoTalk_20240525_213908508_04](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/7083425f-4e92-40d1-a917-531c0e321ed0)   
+![NKakaoTalk_20240525_213908508_05](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/867d9939-842d-4555-9a04-b9440af42916)   
+![NKakaoTalk_20240525_213908508_06](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/33c93e87-7352-40bb-a2b8-ae27abaa65ed)   
+
+<br>
+
+변수 설정을 완료했다면, ESP32 기기를 연동한다.   
+추가 방법은 다음과 같다.   
+![NKakaoTalk_20240525_213908508_07](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/5db687d6-d5f2-4f54-a4d3-0df210014e82)   
+![NKakaoTalk_20240525_213908508_08](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/d5a6c8ef-7744-4d25-a082-2a820ff5df6f)   
+![NKakaoTalk_20240525_213908508_09](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/89a479d9-dad1-4174-a4c6-48aa497e94f7)   
+![NKakaoTalk_20240525_213908508_10](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/d97d0f18-83a5-4d16-afa0-779e56f24cc7)   
+![NKakaoTalk_20240525_213908508_11](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/1538a39e-4374-44a4-a902-8e5b76ebe261)   
+
+<br>
+
+기기 연동 다음에는 네트워크 설정이 필요한데,   
+내용은 지난 예제와 동일하다.   
+[Week05_ESP32WebServer1](https://github.com/YooJeongJick/smartDevicePractice_2024/wiki/Week05_ESP32WebServer1) (예제 > 기본)      
+Secret Key 부분은 ESP32 추가 시 다운 받은 PDF 내용을 참고하여 작성한다,    
+![NKakaoTalk_20240525_213908508_12](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/fec59ad5-70d2-4066-9dcb-190a1e1027e2)   
+![NKakaoTalk_20240525_213908508_13](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/8bb5943b-70e0-4873-96ee-40f98ba8d433)   
+
+<br>
+
+이후 Sketch 창으로 이동 시, 자동으로 생성된 파일을 확인할 수 있다.   
+![NKakaoTalk_20240525_213908508_14](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/f0f85912-ed13-4496-9844-c646ace56228)   
+
+<br>
+
+스케치를 업로드 하기 위해선 Agent 설정이 필요한데,   
+해당 강의에선 다음 팝업을 통해 접근하였다.   
+![NKakaoTalk_20240525_213908508_15](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/448b1ad8-919b-4363-9b93-79a6319ccd39)   
+
+<br>
+
+Agent 설치 과정은 다음과 같다.   
+![NKakaoTalk_20240525_213908508_16](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/34df9e41-cf49-43b3-8216-95510348dd32)   
+![NKakaoTalk_20240525_213908508_17](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/bcc64f4c-50f2-45e4-a3b1-aae0b18a482e)   
+![NKakaoTalk_20240525_213908508_18](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/1f01d85e-57fb-4d6a-b29e-03933a6b0f25)   
+![NKakaoTalk_20240525_213908508_19](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/25ad838d-439c-41b6-941f-201fbe3ca1e1)   
+
+<br>
+
+다운로드 파일에 접근 시, 추가적인 설정은 필요하지 않다.   
+![NKakaoTalk_20240525_213908508_20](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/049ec7e4-6bee-4b6f-bc9c-ad59a62d5a66)   
+![NKakaoTalk_20240525_213908508_21](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/d84855ee-761c-4216-bf6f-df41b2696874)   
+![NKakaoTalk_20240525_213908508_22](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/96260c1f-4a2c-4fb0-b9e7-00913ab67a44)   
+
+설치 완료 시, 버튼이 활성화되는 것을 볼 수 있다. (→)   
+![NKakaoTalk_20240525_213908508_23](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/8a5c2cd5-8eb2-4de2-abc8-483123d13840)   
+
+<br>
+
+.ino 확장자를 가진 파일에 아래 코드를 작성한 후,   
+활성화된 업로드 버튼을 눌러 실행한다.   
+```
+/* 이코드는 아두이노 IDE에서 컴파일 되지 않습니다.
+  아두이노 IoT 클라우드에서 사용하시기 바랍니다. 
+  https://create.arduino.cc/iot/things
+*/
+/*
+  Sketch generated by the Arduino IoT Cloud Thing "ESP32"
+  https://create.arduino.cc/cloud/things/cbf5bb30-7317-45b9-8559-d0d766bf6942
+
+  Arduino IoT Cloud Variables description
+
+  The following variables are automatically generated and updated when changes are made to the Thing
+
+  float temperature;
+  bool led_state;
+
+  Variables which are marked as READ/WRITE in the Cloud Thing will also have functions
+  which are called when their values are changed from the Dashboard.
+  These functions are generated with the Thing and added at the end of this sketch.
+*/
+
+#include "thingProperties.h"
+#include "DHT.h"
+
+int led_pin = 23;
+int dh11_pin = 13;
+
+DHT dht(dh11_pin, DHT11);
+
+void setup() {
+  pinMode(led_pin, OUTPUT);
+  dht.begin();
+  // Initialize serial and wait for port to open:
+  Serial.begin(9600);
+  // This delay gives the chance to wait for a Serial Monitor without blocking if none is found
+  delay(1500);
+
+  // Defined in thingProperties.h
+  initProperties();
+
+  // Connect to Arduino IoT Cloud
+  ArduinoCloud.begin(ArduinoIoTPreferredConnection);
+
+  /*
+     The following function allows you to obtain more information
+     related to the state of network and IoT Cloud connection and errors
+     the higher number the more granular information you’ll get.
+     The default is 0 (only errors).
+     Maximum is 4
+  */
+  setDebugMessageLevel(2);
+  ArduinoCloud.printDebugInfo();
+}
+
+void loop() {
+  ArduinoCloud.update();
+  // Your code here
+  // Read temperature as Celsius (the default)
+  temperature = dht.readTemperature();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(temperature)) {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+  
+  Serial.print(F("Temperature: "));
+  Serial.println(temperature);
+  
+  delay(1000);
+}
+
+/*
+  Since LedState is READ_WRITE variable, onLedStateChange() is
+  executed every time a new value is received from IoT Cloud.
+*/
+void onLedStateChange()  {
+  // Add your code here to act upon LedState change
+  Serial.print("LED state is changed : ");
+  Serial.println(led_state);
+  if (led_state) {
+    digitalWrite(led_pin, HIGH);
+  }
+  else {
+    digitalWrite(led_pin, LOW);
+  }
+}
+```
+
+<br>
+
+실행을 완료했다면, 제어 및 모니터링 구현을 위해 Dashboards 창으로 이동한다.   
+각각의 Dashboard 추가 방법은 다음과 같다.   
+![NKakaoTalk_20240525_213908508_24](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/06fd7d82-e57b-4486-be4f-58d0b3363985)   
+![NKakaoTalk_20240525_213908508_25](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/855ec54c-be0f-4800-8704-4a3417f371f5)   
+![NKakaoTalk_20240525_213908508_26](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/d22eb153-4c14-48d9-b97b-b0ae6187fd5e)   
+![NKakaoTalk_20240525_213908508_27](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/21ebc53b-72ef-4235-9c68-09a3fa0c3d6a)   
+![NKakaoTalk_20240525_213908508_28](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/59053907-50a2-40a7-bb4e-39b44e79871d)   
+![NKakaoTalk_20240525_213908508_29](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/99fa5122-0576-488a-8c6b-e063c70665e2)   
+
+<br>
+
+이를 활용한 결과는 다음과 같다.   
+![KakaoTalk_20240525_213711220](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/941180c9-c128-4278-9abd-1e4756eb507a)   
+
+<br>
+<br>
+
+NTP
+=
+정의
+-
+
