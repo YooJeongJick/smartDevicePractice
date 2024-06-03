@@ -1,0 +1,469 @@
+목차
+=
+- 공공데이터
+   - 이미지 설정
+   - API 설정
+   - 예제
+
+<br>
+<br>
+
+공공데이터
+=
+ESP32는 인터넷 연결을 지원하기 때문에   
+외부의 데이터를 입력할 수 있다.   
+또한, 모듈 연결을 통해 데이터를      
+다양한 방식으로 출력할 수도 있다.   
+
+<br>
+
+해당 강의에서는 이와 같은 특징을 활용하여   
+ESP32에 OLED 디스플레이를 연결하고,   
+공공데이터 포털에서 가져온 미세먼지 정보와   
+미세먼지 수치에 따른 이미지를 기기에 출력해 볼 것이다.   
+
+<br>
+<br>
+
+이미지 설정
+-
+OLED 디스플레이에 이미지를 표현하기 위해선   
+ESP32가 인식할 수 있도록 이미지를 코드 형식으로 변환시켜야 한다.   
+
+<br>
+
+이번 강의에서는 미리 변환시켜 둔 다음 코드를 사용할 것이다.   
+텍스트 파일을 만들어 해당 내용을 붙여 넣고, 이름은 “images.h”로 지정한다.   
+```
+const unsigned char VeryGood [] PROGMEM = {
+	0x00, 0x0f, 0xf0, 0x00, 0x00, 0x7f, 0xfe, 0x00, 0x00, 0xff, 0xff, 0x00, 0x03, 0xff, 0xff, 0xc0, 
+	0x07, 0xff, 0xff, 0xe0, 0x0f, 0xff, 0xff, 0xf0, 0x1f, 0xff, 0xff, 0xf8, 0x1f, 0xff, 0xff, 0xf8, 
+	0x38, 0xc7, 0xe3, 0x1c, 0x70, 0x03, 0xc0, 0x0e, 0x70, 0x03, 0xc0, 0x0e, 0x70, 0x03, 0xc0, 0x0e, 
+	0xf0, 0x03, 0xc0, 0x0f, 0xf8, 0x07, 0xe0, 0x1f, 0xfc, 0x0f, 0xf0, 0x3f, 0xfe, 0x1f, 0xf8, 0x7f, 
+	0xff, 0x3e, 0x7c, 0xff, 0xff, 0xfc, 0x3f, 0xff, 0xff, 0xfc, 0x3f, 0xff, 0xfd, 0xfe, 0x7f, 0xff, 
+	0x79, 0xff, 0xff, 0x9e, 0x78, 0xff, 0xff, 0x9e, 0x7c, 0x7f, 0xff, 0x1e, 0x3e, 0x3f, 0xfe, 0x3c, 
+	0x1f, 0x1f, 0xfc, 0x78, 0x1f, 0x87, 0xe0, 0xf8, 0x0f, 0xc0, 0x03, 0xf0, 0x07, 0xf8, 0x0f, 0xe0, 
+	0x03, 0xff, 0xff, 0xc0, 0x00, 0xff, 0xff, 0x00, 0x00, 0x7f, 0xfe, 0x00, 0x00, 0x0f, 0xf0, 0x00
+};
+
+const unsigned char Good [] PROGMEM = {
+	0x00, 0x0f, 0xf0, 0x00, 0x00, 0x7f, 0xfe, 0x00, 0x01, 0xff, 0xff, 0x80, 0x03, 0xff, 0xff, 0xc0, 
+	0x07, 0xff, 0xff, 0xe0, 0x0f, 0xff, 0xff, 0xf0, 0x1e, 0x3f, 0xf8, 0xf8, 0x3e, 0x1f, 0xf8, 0x78, 
+	0x3c, 0x0f, 0xf0, 0x3c, 0x78, 0x87, 0xe2, 0x1e, 0x71, 0xc3, 0xc7, 0x0e, 0x71, 0xe7, 0xc7, 0x9e, 
+	0xfb, 0xff, 0xef, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x7f, 0xff, 0xff, 0xfc, 0x3f, 0xff, 0xff, 0xfe, 0x7f, 0xff, 
+	0x79, 0xff, 0xff, 0x9e, 0x78, 0xff, 0xff, 0x9e, 0x7c, 0xff, 0xff, 0x1e, 0x3e, 0x7f, 0xfe, 0x3c, 
+	0x3f, 0x1f, 0xfc, 0x7c, 0x1f, 0x87, 0xf0, 0xf8, 0x0f, 0xc0, 0x01, 0xf0, 0x07, 0xf0, 0x0f, 0xe0, 
+	0x03, 0xff, 0xff, 0xc0, 0x00, 0xff, 0xff, 0x00, 0x00, 0x7f, 0xfe, 0x00, 0x00, 0x0f, 0xf0, 0x00
+};
+
+const unsigned char Bad [] PROGMEM = {
+	0x00, 0x0f, 0xf0, 0x00, 0x00, 0x7f, 0xfe, 0x00, 0x01, 0xff, 0xff, 0x80, 0x03, 0xff, 0xff, 0xc0, 
+	0x07, 0xff, 0xff, 0xe0, 0x0f, 0xff, 0xff, 0xf0, 0x1f, 0xff, 0xff, 0xf8, 0x3f, 0xff, 0xff, 0xf8, 
+	0x3f, 0xff, 0xff, 0xfc, 0x70, 0x03, 0xc0, 0x0e, 0x70, 0x03, 0xc0, 0x0e, 0x70, 0x03, 0xc0, 0x0e, 
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x7f, 0xff, 0xff, 0xfc, 0x3f, 0xff, 
+	0xff, 0xfc, 0x3f, 0xff, 0xff, 0xfe, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+	0x7f, 0xff, 0xff, 0xfe, 0x7f, 0xff, 0xff, 0xfe, 0x7f, 0xe0, 0x07, 0xfe, 0x3f, 0x80, 0x03, 0xfc, 
+	0x3f, 0x0f, 0xf0, 0xfc, 0x1e, 0x3f, 0xfc, 0x78, 0x0f, 0xff, 0xfe, 0xf0, 0x07, 0xff, 0xff, 0xe0, 
+	0x03, 0xff, 0xff, 0xc0, 0x00, 0xff, 0xff, 0x00, 0x00, 0x7f, 0xfe, 0x00, 0x00, 0x0f, 0xf0, 0x00
+};
+
+const unsigned char VeryBad [] PROGMEM = {
+	0x00, 0x0f, 0xf0, 0x00, 0x00, 0x7f, 0xfe, 0x00, 0x01, 0xff, 0xff, 0x80, 0x03, 0xff, 0xff, 0xc0, 
+	0x07, 0xff, 0xff, 0xe0, 0x0f, 0xff, 0xff, 0xf0, 0x1d, 0xef, 0xf7, 0xb8, 0x38, 0xc7, 0xe3, 0x1c, 
+	0x3c, 0x0f, 0xf0, 0x3c, 0x7e, 0x1f, 0xf8, 0x7e, 0x7e, 0x1f, 0xf8, 0x7e, 0x7c, 0x0f, 0xf0, 0x3e, 
+	0xf8, 0xc7, 0xe3, 0x1f, 0xfd, 0xef, 0xf7, 0xbf, 0xff, 0xfe, 0x7f, 0xff, 0xff, 0xfc, 0x3f, 0xff, 
+	0xff, 0xfc, 0x3f, 0xff, 0xff, 0xfe, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
+	0x7f, 0xff, 0xff, 0xfe, 0x7f, 0xff, 0xff, 0xfe, 0x7f, 0xe0, 0x07, 0xfe, 0x3f, 0x80, 0x03, 0xfc, 
+	0x3f, 0x0f, 0xf0, 0xfc, 0x1e, 0x3f, 0xfc, 0x78, 0x0f, 0xff, 0xfe, 0xf0, 0x07, 0xff, 0xff, 0xe0, 
+	0x03, 0xff, 0xff, 0xc0, 0x01, 0xff, 0xff, 0x80, 0x00, 0x7f, 0xfe, 0x00, 0x00, 0x0f, 0xf0, 0x00
+};
+```
+
+<br>
+
+
+이미지 출력이 원활한지 확인을 해볼 것인데,   
+이를 위한 준비물 및 회로 연결은 다음과 같다.   
+![KakaoTalk_20240527_122432683_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/0751256b-096a-4019-bc65-55b14f10fc88)
+![KakaoTalk_20240527_122432683](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/4ccfb487-7f75-479a-a26f-05b6d303ba0d)
+
+<br>
+
+
+예제를 실행시키기 위한 코드는 아래와 같다.   
+```
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#include "images.h"  // 이미지 파일을 포함하는 헤더 파일
+
+#define SCREEN_WIDTH 128  // OLED 디스플레이의 너비 (픽셀 단위)
+#define SCREEN_HEIGHT 32  // OLED 디스플레이의 높이 (픽셀 단위)
+
+#define OLED_RESET -1        // 리셋 핀 번호 # (아두이노 리셋 핀을 공유하는 경우 -1)
+#define SCREEN_ADDRESS 0x3C  //128x64의 경우 0x3D, 128x32의 경우 0x3C
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setup() {
+  Serial.begin(115200);
+
+  // SSD1306_SWITCHCAPVCC = 내부적으로 3.3V에서 디스플레이 전압 생성
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;)
+      ;  // OLED초기화 실패시, 더 이상 진행하지 않음
+  }
+
+  // 초기 디스플레이 버퍼 내용을 화면에 표시합니다.
+  // 라이브러리는 이를 Adafruit 스플래시 화면으로 초기화합니다.
+  display.display();
+  delay(2000);  // 2초간 대기
+
+  display.clearDisplay();       // 디스플레이 지우기
+
+  display.drawBitmap(
+    0,
+    0,
+    VeryGood, 32, 32, 1);  // VeryGood 이미지를 디스플레이에 그리기
+
+  display.drawBitmap(
+    32,
+    0,
+    Good, 32, 32, 1);  // Good 이미지를 디스플레이에 그리기
+
+  display.drawBitmap(
+    64,
+    0,
+    Bad, 32, 32, 1);  // Bad 이미지를 디스플레이에 그리기
+
+  display.drawBitmap(
+    96,
+    0,
+    VeryBad, 32, 32, 1);  // VeryBad 이미지를 디스플레이에 그리기
+
+  display.display();
+}
+
+void loop() {
+}
+```
+
+<br>
+
+참고로, 위에서 만든 “images.h” 파일을   
+코드 파일과 같은 폴더 내에 위치시켜야 한다.    
+![A_NKakaoTalk_20240602_165408044_06](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/37ca8012-2b2d-40f6-b520-ec274b8e3505)   
+
+<br>
+
+이에 대한 실행 결과는 다음과 같다.   
+![B_KakaoTalk_20240602_172131924](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/32d71503-a014-4d1f-9081-22bf2ca4e6b7)   
+
+<br>
+<br>
+
+API 설정
+-
+공공데이터 사이트는 아래와 같은데,    
+공공데이터를 활용하기 위해선 회원가입이 필요하다.   
+![NKakaoTalk_20240602_165408044](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/ffb28c13-d155-40b3-803b-dc4252a507fd)   
+
+<br>
+
+이후 위의 검색어를 통해 “한국환경공단_에어코리아_대기오염정보"       
+오픈 API를 찾고, 활용신청 버튼을 클릭한다.    
+![NKakaoTalk_20240602_165408044_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/4f0286c9-6835-4258-ab8e-9e6c092f2eb9)      
+  
+> _API는 (application programming interface)의 약자로,   
+소프트웨어가 서로 통신하는 방법을 정의한 내용이다.   
+즉, 오픈 API는 소프트웨어 제공 업체가     
+자신의 서비스 접근 방법을 외부에 공개한 것이다._  
+
+<br>
+<br>
+
+활용 목적을 다음과 같이 입력하고, 라이선스 표시에 동의한다.  
+![NKakaoTalk_20240602_165408044_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/7f9acc8b-1389-4438-8187-64f7b39f93d2)   
+
+> _해당 강의에서는 상세 기능정보 중    
+측정소별 실시간 측정 정보 조회를 활용한다._   
+
+<br>
+<br>
+
+신청이 승인되면, 아래와 같은 창에서 정보를 확인할 수 있다.   
+![NKakaoTalk_20240602_165408044_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/412752bd-e7f6-4f5a-9ee6-ccf0c5208d74)   
+
+<br>
+<br>
+
+예제
+-
+예제를 실행시키기 위한 준비물 및 회로 연결은     
+위와 동일하며, 코드 내용은 다음과 같다.   
+```
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#include <WiFi.h>
+#include <time.h>
+
+#include "images.h"  // 이미지 파일을 포함하는 헤더 파일
+
+const char* ssid = "WEBSERVER";          // 사용하는 WiFi 네트워크 이름 (SSID)
+const char* password = "20240403";  // 사용하는 WiFi 네트워크 비밀번호
+const int httpPort = 80;
+
+const char* apiKey = "bTygKMSYeNQ23y7wRo0Bt%2B9MiI%2BaufzgHUHWQ3EKgKeSbeSU95G32GkxH9P24tutaFnruv8juMbbyYtQhNX%2BMA%3D%3D";
+const char* version = "&ver=1.3";
+const char* server = "apis.data.go.kr";
+const char* stationName = "종로구";
+const char* returnType = "xml";  //or json
+const char* numOfRows = "1";
+const char* pageNo = "1";
+const char* dataTerm = "DAILY";
+
+WiFiClient client;
+
+#define SCREEN_WIDTH 128  // OLED 디스플레이의 너비 (픽셀 단위)
+#define SCREEN_HEIGHT 32  // OLED 디스플레이의 높이 (픽셀 단위)
+
+#define OLED_RESET -1        // 리셋 핀 번호 # (아두이노 리셋 핀을 공유하는 경우 -1)
+#define SCREEN_ADDRESS 0x3C  //128x64의 경우 0x3D, 128x32의 경우 0x3C
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setup() {
+  Serial.begin(115200);
+
+  // SSD1306_SWITCHCAPVCC = 내부적으로 3.3V에서 디스플레이 전압 생성
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;)
+      ;  // OLED초기화 실패시, 더 이상 진행하지 않음
+  }
+
+  // 초기 디스플레이 버퍼 내용을 화면에 표시합니다.
+  // 라이브러리는 이를 Adafruit 스플래시 화면으로 초기화합니다.
+  display.display();
+  delay(2000);  // 2초간 대기
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  Serial.println("\nConnecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(1000);
+  }
+  Serial.println("\nWiFi is connected");
+
+  display.clearDisplay();       // 디스플레이 지우기
+  display.setTextSize(1);       // 텍스트 크기를 1로 설정
+  display.setCursor(0, 0);      // 커서 위치를 디스플레이 왼쪽 위 모서리로 설정
+  display.setTextColor(WHITE);  // 텍스트 색상을 흰색으로 설정
+
+  display.drawBitmap(
+    0,
+    0,
+    VeryGood, 32, 32, 1);  // VeryGood 이미지를 디스플레이에 그리기
+
+  display.display();
+}
+
+void loop() {
+  String a[3];
+  int i = 0;
+  String dateNtime;
+  String pm10Val;
+  String pm10Grade;
+  String tmp_str;
+  static int IntervalReq = 1800;  // 30분을 초단위로 계산
+
+  if (IntervalReq++ > 1800) {  //30분 간격으로 data요청
+    IntervalReq = 0;
+    Requesthttp();
+  };
+
+  delay(50);
+  while (client.available()) {
+
+    String line = client.readStringUntil('\n');
+    Serial.println(line);
+
+    i = line.indexOf("</dataTime>");
+    if (i > 0) {
+      tmp_str = "<dataTime>";
+      dateNtime = line.substring(line.indexOf(tmp_str) + tmp_str.length(), i);
+      Serial.println(dateNtime);
+    }
+
+    i = line.indexOf("</pm10Value>");
+
+    if (i > 0) {
+      tmp_str = "<pm10Value>";
+      pm10Val = line.substring(line.indexOf(tmp_str) + tmp_str.length(), i);
+      Serial.println(pm10Val);
+    }
+
+    i = line.indexOf("</pm10Grade>");
+
+    if (i > 0) {
+      tmp_str = "<pm10Grade>";
+      pm10Grade = line.substring(line.indexOf(tmp_str) + tmp_str.length(), i);
+      Serial.println(pm10Grade);
+      client.stop();
+      display.clearDisplay();
+      displayIcon(atoi(pm10Grade.c_str()));  // 등급에 따라 해당 아이콘 그리기
+      displayString(dateNtime, pm10Val);     // 날짜 및 시간과 미세먼지 농도 표시
+      display.display();
+      break;
+    }
+  }
+
+  delay(1000);
+}
+
+void Requesthttp() {
+  if (client.connect(server, httpPort)) {
+    Serial.println("\nSuccessed connection, and request http protocol");
+
+    // HTTP 요청을 보냄
+    client.print(String("Get /B552584/ArpltnInforInqireSvc"));
+    client.print(String("/getMsrstnAcctoRltmMesureDnsty?serviceKey="));
+    client.print(String(apiKey));
+    client.print(String("&returnType=") + String(returnType));
+    client.print(String("&numOfRows=") + String(numOfRows));
+    client.print(String("&pageNo=") + String(pageNo));
+    // URL 인코딩하여 문자열 전송
+    client.print(String("&stationName=") + urlencode(String(stationName)));
+    client.print(String("&dataTerm=") + String(dataTerm));
+    client.print(String(version));
+    client.print(String(" HTTP/1.1\r\n"));
+    client.print(String("Host: ") + String(server) + String("\r\n"));
+    client.print(String("Connection: close\r\n"));
+    client.print(String("\r\n\r\n"));
+  } else {
+    Serial.println("\nfailed connection");
+  }
+}
+
+void displayString(String dnt, String pmval) {
+  display.setCursor(50, 3);
+  display.println(dnt.substring(0, 10));  // 날짜를 디스플레이에 출력
+  display.setCursor(50, 13);
+  display.println(dnt.substring(11));  // 시간을 디스플레이에 출력
+  display.setCursor(50, 23);
+  display.print(pmval);
+  display.println(" ug/m^3");  // 미세먼지 농도를 디스플레이에 출력
+}
+
+void displayIcon(int grade) {
+  switch (grade) {
+    case 1:
+      display.drawBitmap(
+        0,
+        0,
+        VeryGood, 32, 32, 1);  // VeryGood 아이콘을 디스플레이에 그리기
+      break;
+    case 2:
+      display.drawBitmap(
+        0,
+        0,
+        Good, 32, 32, 1);  // Good 아이콘을 디스플레이에 그리기
+      break;
+    case 3:
+      display.drawBitmap(
+        0,
+        0,
+        Bad, 32, 32, 1);  // Bad 아이콘을 디스플레이에 그리기
+      break;
+    case 4:
+      display.drawBitmap(
+        0,
+        0,
+        VeryBad, 32, 32, 1);  // VeryBad 아이콘을 디스플레이에 그리기
+      break;
+  }
+}
+
+String urlencode(String str) {
+  String encodedString = "";
+  char c;
+  char code0;
+  char code1;
+  for (int i = 0; i < str.length(); i++) {
+    c = str.charAt(i);
+    if (c == ' ') {
+      encodedString += '+';
+    } else if (isalnum(c)) {
+      encodedString += c;
+    } else {
+      code1 = (c & 0xf) + '0';
+      if ((c & 0xf) > 9) {
+        code1 = (c & 0xf) - 10 + 'A';
+      }
+      c = (c >> 4) & 0xf;
+      code0 = c + '0';
+      if (c > 9) {
+        code0 = c - 10 + 'A';
+      }
+      encodedString += '%';
+      encodedString += code0;
+      encodedString += code1;
+    }
+  }
+  return encodedString;
+}
+```
+<br>
+
+코드 내에선 다음과 같은 설정이 필요하다.   
+1. 이미지 설정   
+2. 인터넷 설정   
+3. API 설정   
+
+<br>
+
+이미지 설정은 앞선 예제와 마찬가지로    
+“images.h” 파일 위치를 변경시켜야 하며,   
+인터넷 설정은 아래와 같다.     
+[Week05_ESP32WebServer1](https://github.com/YooJeongJick/smartDevicePractice_2024/wiki/Week05_ESP32WebServer1) (예제 > 기본)      
+```
+const char* ssid = "WEBSERVER";          // 사용하는 WiFi 네트워크 이름 (SSID)
+const char* password = "20240403";  // 사용하는 WiFi 네트워크 비밀번호
+```   
+
+<br>
+
+API는 공공데이터 포털 사이트의    
+다음과 같은 창에서 확인할 수 있다.   
+![NKakaoTalk_20240602_165408044_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/91baeb54-9600-4f28-ac83-4ef7369e84b6)   
+![NKakaoTalk_20240602_165408044_04](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/7891bc09-cd23-4bc3-9ed5-6a5f4c682e92)   
+
+<br>
+
+위에서 확인한 값은 아래와 같이 적용한다.   
+```
+const char* apiKey = "bTygKMSYeNQ23y7wRo0Bt%2B9MiI%2BaufzgHUHWQ3EKgKeSbeSU95G32GkxH9P24tutaFnruv8juMbbyYtQhNX%2BMA%3D%3D";
+```
+
+<br>
+
+해당 코드는 API를 통해 미세먼지 측정 시간(dateNtime), 농도(pm10Val),   
+등급(pm10Grade) 정보를 가져올 것이다.   
+미세먼지 측정 시간과 농도는 문자열로 출력되고,   
+미세먼지 측정 등급은 값에 따른 이미지로 출력된다.   
+```
+  String dateNtime;
+  String pm10Val;
+  String pm10Grade;
+```
+
+<br>
+
+이에 대한 실행 결과는 다음과 같다.   
+![NKakaoTalk_20240602_172035363](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/f1f4f9b0-0dd3-4536-8876-c21696a40307)   
+
+
