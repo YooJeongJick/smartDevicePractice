@@ -1,0 +1,1 @@
+curl -v -X POST "https://kauth.kakao.com/oauth/token" -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=authorization_code" -d "client_id=a5aad8c281d73b097ee6a0a0c90af08f" --data-urlencode "redirect_uri=https://www.example.com/oauth" -d "code=iF8r9Oyz_lK4lApAuwIZnXjwWh8JMhtq0DJRUOifb9X2FipCqw_FJtSnS8t9xAsKtaMdjQorDKYAAAGIrwwMNg"

@@ -1,0 +1,417 @@
+목차
+=
+- 토양 습도 센서
+- REST API
+- 카카오톡
+
+<br>
+<br>
+
+토양 습도 센서
+=
+해당 기기를 통해 토양의 습도를 측정할 수 있다.   
+토양 습도 센서는 돌출된 두 부분에서 전류를 흘려보내서 저항 값을 측정한다.   
+수분함량이 많으면 전류의 세기는 강해지고 저항값은 낮아지며     
+높은 센서 값을 측정할 수 있는데, 이는 **옴의 법칙**에 의해 설명된다.   
+옴의 법칙이란 간단히 말해 전류의 양은 저항의 크기에 반비례함을 의미한다.   
+
+<br>
+
+토양 습도 센서의 작동 확인을 위한 준비물 및 회로 연결은 다음과 같다.   
+![KakaoTalk_20240611_181417573](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/1fb27b4e-d36d-4b5e-b3ac-537feb0a9cee)
+![KakaoTalk_20240611_181417573_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/88e19efe-1e74-44ee-b8dc-8eb266aecd6e)
+
+<br>
+
+예제를 실행시키기 위한 코드는 아래와 같다.   
+```
+const int soilSensorPin = 34;
+
+ void setup(){
+ Serial.begin(115200);
+ }
+
+ void loop(){
+ Serial.print("토양습도센서값:");
+ Serial.println(analogRead(soilSensorPin));
+ delay(1000);
+ }
+```
+
+<br>
+
+이에 대한 결과는 다음과 같다.   
+![KakaoTalk_20240611_181443882](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/f9ef8172-7bf7-4a48-9616-44f09a3c2c8d)   
+> 0 ~ 1500 사이는 건조한 상태,   
+1500 ~ 2000 사이는 정상 습도,   
+2000 이상의 값은 물속에서 측정 될 수 있다.   
+
+<br>
+<br>
+
+REST API
+=
+REST API는 REST 기반으로 구현된 API로,   
+REST란 자원을 명시하고 이를 처리하는 구조를 의미한다.   
+이와 같은 구조는 HTTP를 통해 다음과 같은 방식으로 구현된다.   
+1. HTTP URL를 통해 자원을 명시   
+2. HTTP Method를 통해 앞선 내용을 처리   
+
+<br>
+
+***
+
+**1. HTTP URL를 통해 자원을 명시**   
+
+이에 대한 예시는 해당 페이지의 URL을 통해 확인할 수 있다.   
+여기서 /는 계층 관계를 나타낸다.   
+```
+https://github.com/YooJeongJick/smartDevicePractice_2024/wiki/Week14_ESP32카카오톡
+```
+
+<br>
+
+***
+
+**2. HTTP Method를 통해 앞선 내용을 처리**  
+
+HTTP Method는 CRUD를 구현을 돕는다.   
+
+<br>
+
+CRUD는 기본적인 데이터 처리 방식인   
+Create(생성), Read(읽기), Update(갱신), Delete(삭제)를   
+묶어서 정의하는 용어이다.   
+
+<br>
+
+이와 같은 CRUD는 다음과 같은 HTTP Method와 연결된다.   
+Create - POST   
+Read - GET       
+Update - PUT / PATCH   
+Delete - DELETE   
+
+<br>
+
+앞선 작업 처리에 대한 응답은 HTTP Status Code를 통해 나타난다.   
+
+<br>
+
+***
+
+이러한 특징의 REST API를 구현한 예제는 다음과 같다.   
+![NKakaoTalk_20240611_162927715](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/da70d46f-e9d4-4c46-b594-560d2ad4f3fb)   
+![NKakaoTalk_20240611_162927715_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/2001f18b-52bd-4f12-b838-455ae9dcbaa2)   
+![NKakaoTalk_20240611_162927715_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/a2cec490-f8cf-4eaf-b8fd-a43c03a11d50)   
+![NKakaoTalk_20240611_162927715_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/b836570e-65b7-4fa3-9c25-5ef1a06aae87)   
+
+<br>
+<br>
+
+카카오톡
+=
+앞서 언급한 토양 습도 센서와 REST API 원리를 활용하여    
+일정 시간마다 카카오톡을 통해 측정값을 전달하는 기능을 구현할 것이다.   
+
+<br>
+<br>
+
+기능 구현을 위해선 몇 가지 설정이 필요한데,   
+이와 같은 설정은 카카오톡 개발자 사이트를 통해 이루어진다.   
+해당 사이트에 회원가입을 한 후,     
+오른쪽 위에 있는 내 애플리케이션 탭으로 이동한다.   
+https://developers.kakao.com   
+![NKakaoTalk_20240611_181359526](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/8a77de18-1ec5-42be-881b-289556f6f788)         
+
+<br>
+<br>
+
+그다음, 애플리케이션을 추가시켜 준다.   
+![NKakaoTalk_20240611_181359526_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/ceffc344-fcda-4a87-98d5-f0c052f42f0c)      
+
+<br>
+<br>
+
+추가한 애플리케이션을 클릭하고   
+오른쪽의 메뉴를 통해 앱 키 창으로 가면,   
+아래와 같은 창을 확인할 수 있다.   
+![NKakaoTalk_20240611_181359526_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/08469091-963e-4ca7-a4ec-618674fb8287)      
+> Authorization code 발급, 토큰 발급, 예제에 활용      
+
+<br>
+<br>
+
+이후 메뉴를 통해 플랫폼 창으로 이동하여 Web 플랫폼을 등록해 준다.   
+```
+http://localhost
+```
+![NKakaoTalk_20240611_181359526_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/0437cc73-e37f-448f-a476-cbb6ea3510e9)   
+
+<br>
+<br>
+
+다음으로 카카오 로그인 탭으로 이동해 활성화 설정을 진행한다.   
+![NKakaoTalk_20240611_181359526_04](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/baf4bdf1-fb1f-477a-836e-9315e4ab2ad8)   
+
+<br>
+<br>
+
+설정을 완료했다면, 해당 창의 하단으로 가 Redirect URI을 등록한다.   
+```
+https://www.example.com/oauth
+```
+![NKakaoTalk_20240611_181359526_05](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/cb44a7c0-6bdc-4c95-becd-5740e75d9613)   
+> 토큰 발급에 활용   
+
+<br>
+<br>
+
+이후, 동의항목 탭으로 이동해 아래와 같이 설정한다.   
+![NKakaoTalk_20240611_181359526_06](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/f08293b7-2642-4db9-9d87-3fdfe10e56fe)   
+![NKakaoTalk_20240611_181359526_07](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/2ea3970a-2873-446c-9e37-72052c5eff21)   
+
+<br>
+<br>
+
+다음으로 Authorization code를 받아야 하는데,   
+이에 사용되는 URL은 아래와 같다.   
+```
+https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=??????????????????????&redirect_uri=https://www.example.com/oauth
+```
+
+<br>
+<br>
+
+해당 링크의 id=?????????????????????? 부분에    
+앞서 확인한 REST API 값을 붙여 넣는다.   
+
+<br>
+<br>
+
+그러면 아래와 같은 창을 확인할 수 있는데,   
+해당 탭 URL의 code= 이후의 값이 Authorization code이다.   
+![NKakaoTalk_20240611_181359526_08](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/557a97af-202b-404a-a548-df2cf2f6db4c)   
+> 토큰 발급에 활용   
+
+<br>
+<br>
+
+앞선 과정으로 얻은 REST API, Redirect URI, Authorization code를 통해    
+Access 토큰 및 Refresh 토큰을 발급받을 수 있다.   
+다음 코드의 REST_API_KEY, REDIRECT_URI, AUTHORIZE_CODE 부분을   
+해당하는 내용으로 바꿔준 뒤, 윈도우의 cmd 창에 입력한다.    
+```
+curl -v -X POST "https://kauth.kakao.com/oauth/token" -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=authorization_code" -d "client_id=REST_API_KEY" --data-urlencode "redirect_uri=REDIRECT_URI" -d "code=AUTHORIZE_CODE"
+```
+
+<br>
+<br>
+
+이에 대한 결과는 아래와 같다.   
+![NKakaoTalk_20240611_181359526_09](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/23a7d2fc-a6bc-4ec1-b5b4-32d5dfb00ecb)   
+> 예제에 활용   
+
+<br>
+<br>
+
+예제를 실행시키기 위한 준비물 및 회로 연결은    
+토양 습도 센서 실습과 동일하며, 코드 내용은 다음과 같다.   
+```
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const char *ssid = "Your_SSID";          // 사용하는 WiFi 네트워크 이름 (SSID)
+const char *password = "Your_Password";  // 사용하는 WiFi 네트워크 비밀번호
+
+const String rest_api_key = "REST API KEY"; 
+String access_token = "Access token";
+String refresh_token = "Refresh token";
+
+#define MsgSendInterval 3600 // 60 * 60 초, 즉 한시간 간격으로 전송
+long timeout = 3600;  //시간을 초로 나타냄
+int sensorValue = 0;
+int sensorPin = 34; // 토양 습도 센서 핀
+
+void setup() {
+  Serial.begin(115200);
+
+  WiFi.begin(ssid, password);
+  Serial.println("Connecting");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(1000);
+  }
+  Serial.print("\nConnected to WiFi : ");
+  Serial.println(WiFi.localIP());
+}
+void loop() {
+  if (timeout++ > MsgSendInterval)  // 1시간(60 * 60)에 1번씩 전송
+  {
+    if (isAccessTokenExpired() == true) { //access token 만료 여부 확인
+      if (update_access_token() == false) { // access token 재발급
+        Serial.println("Access token update failed");
+      }
+    }
+    sensorValue = analogRead(sensorPin);//토양 센서값 읽기
+    send_message();
+    timeout = 0;
+  }
+
+  delay(1000);
+}
+
+
+// str문자열에서 start_string와 end_string사이의 문자열을 추출하는 함수
+String extract_string(String str, String start_string, String end_string) {
+  int index1 = str.indexOf(start_string) + start_string.length();
+  int index2 = str.indexOf(end_string, index1);
+  String value = str.substring(index1, index2);
+  return value;
+}
+
+bool isAccessTokenExpired() {
+  HTTPClient http;
+  bool returnVal = true;
+/*
+curl -v -X GET "https://kapi.kakao.com/v1/user/access_token_info" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}"
+*/
+  if (!http.begin("https://kapi.kakao.com/v1/user/access_token_info")) {
+    Serial.println("\nfailed to begin http\n");
+  }
+  http.addHeader("Authorization", "Bearer " + access_token);
+
+  int httpCode = http.GET();
+
+  // httpCode will be negative on error
+  if (httpCode > 0) {
+    // file found at server
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      Serial.println(payload);
+      String expireT = extract_string(payload, "\"expires_in\":", ",");
+      Serial.println(expireT.toInt());
+      if (expireT.toInt() > 0) {
+        returnVal = false;
+      } else {
+        returnVal = true;
+      }
+    }
+  } else {
+    Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+  }
+  http.end();
+  return returnVal;
+}
+
+void send_message() {
+  HTTPClient http;
+  String url = "https://kapi.kakao.com/v2/api/talk/memo/default/send";
+  if (!http.begin(url)) {
+    Serial.println("\nfailed to begin http\n");
+  }
+  http.addHeader("Authorization", "Bearer " + access_token);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+  int http_code;
+  /*
+   template_object={
+        "object_type": "text",
+        "text": "텍스트 영역입니다. 최대 200자 표시 가능합니다.",
+        "link": {
+            "web_url": "https://developers.kakao.com",
+            "mobile_web_url": "https://developers.kakao.com"
+        },
+        "button_title": "바로 확인"
+    }
+    */
+  String data = String("template_object={") + 
+                String("\"object_type\": \"text\",") + 
+                String("\"text\": \"") + String("토양 센서 값 :") + 
+                String(sensorValue) +  //토양 센서 값
+                String("\",\"link\": {}}"); //link가 없으면 오류메세지 받음
+  Serial.println(data);
+  http_code = http.POST(data);
+  Serial.print("HTTP Response code: ");
+  Serial.println(http_code);
+
+  String response;
+  if (http_code > 0) {
+    response = http.getString();
+    Serial.println(response);
+  }
+
+  http.end();
+}
+
+/*
+curl -v -X POST "https://kauth.kakao.com/oauth/token" \
+ -H "Content-Type: application/x-www-form-urlencoded" \
+ -d "grant_type=refresh_token" \
+ -d "client_id=${REST_API_KEY}" \
+ -d "refresh_token=${USER_REFRESH_TOKEN}"
+*/
+bool update_access_token() {
+  HTTPClient http;
+  bool retVal = false;
+
+  String url = "https://kauth.kakao.com/oauth/token";
+  String new_refresh_token = "";
+  if (!http.begin(url)) {
+    Serial.println("\nfailed to begin http\n");
+  }
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  int http_code;
+  String data = "grant_type=refresh_token&client_id=" + rest_api_key + "&refresh_token=" + refresh_token;
+  Serial.println(data);
+  http_code = http.POST(data);
+  Serial.print("HTTP Response code: ");
+  Serial.println(http_code);
+
+  String response;
+  if (http_code > 0) {
+    response = http.getString();
+    Serial.println(response);
+    access_token = extract_string(response, "{\"access_token\":\"", "\"");
+    new_refresh_token = extract_string(response, "\"refresh_token\":\"", "\"");
+    //만료 1개월전부터 갱신되므로 data가 없을 수도 있음
+    if (new_refresh_token != "") {
+      refresh_token = new_refresh_token;
+    }
+    retVal = true;
+  } else {
+    retVal = false;
+  }
+  http.end();
+  return retVal;
+}
+```
+
+<br>
+<br>
+
+인터넷 설정은 앞선 실습과 동일하다.   
+[Week05_ESP32WebServer1](https://github.com/YooJeongJick/smartDevicePractice_2024/wiki/Week05_ESP32WebServer1) (예제 > 기본)       
+```
+const char *ssid = "Your_SSID";          // 사용하는 WiFi 네트워크 이름 (SSID)
+const char *password = "Your_Password";  // 사용하는 WiFi 네트워크 비밀번호
+```
+
+<br>
+<br>
+
+앞서 준비한 REST API, Access 토큰, Refresh 토큰 설정은 아래와 같다.   
+```
+const String rest_api_key = "REST API KEY"; 
+String access_token = "Access token";
+String refresh_token = "Refresh token";
+```
+
+<br>
+<br>
+
+이에 대한 실행 결과는 다음과 같다.   
+![NKakaoTalk_20240611_181359526_10](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/d6707181-7fe3-4260-8079-99439fef6c2b)   
+![NKakaoTalk_20240611_181359526_11](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/8bdaeeb2-9382-4337-9604-6586d849d6ed)   
+> 해당 강의에서는 위의 코드 일부를 바꿔   
+1분마다 카카오톡 메시지가 오도록 설정했다.    
