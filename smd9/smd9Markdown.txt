@@ -1,0 +1,97 @@
+목차
+=
+- Node-RED
+- 설정
+- 예제
+
+<br>
+<br>
+
+Node-RED
+=
+Node-RED는 IBM사에서 만든 오픈 소스 개발 도구이다.   
+직관적으로 확인할 수 있는 시각적인 프로그래밍이 특징으로,   
+각각의 노드를 연결하여 플로우를 만드는 방식으로 구현된다.   
+즉 Node-RED는 로우코드 개발 플랫폼인데, 이는   
+코드를 적게 작성할 수 있도록 지원됨을 의미한다.   
+
+<br>
+
+또한, Node-RED는 Node.js 환경에서 작동하기 때문에   
+해당 툴을 사용하기 위해선 Node.js 설치가 필수적이다.   
+따라서 코드 작성 시, 자바스크립트가 주요 언어이며   
+기본적으로 인터넷 브라우저를 통해 접속할 수 있다.   
+
+<br>
+<br>
+
+설정
+=
+예제 실행에 앞서, Node-RED의 작동 환경을    
+설정해야 하기 때문에 Node.js를 설치한다.   
+Node.js 설치 홈페이지는 아래와 같다.   
+```
+https://nodejs.org/en
+```
+![NKakaoTalk_20240625_120204690](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/baeb68ad-1305-4ec6-8886-d38b1d0218cc)   
+
+<br>
+<br>
+
+이후, 설치가 완료되었으면 윈도우 cmd창에   
+다음 명령어를 입력해 Node-RED를 설치한다.   
+```
+npm install -g --unsafe-perm node-red
+```
+![NKakaoTalk_20240625_120204690_01](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/1fcadd52-0a46-4f8f-bdcc-8793af5b3b98)   
+
+<br>
+<br>
+
+설치된 Node-RED는 아래 명령어를 입력하여 실행할 수 있다.   
+```
+node-red
+```
+> cmd 실행 화면을 닫거나 Ctrl + C를 누르면 종료된다.   
+
+<br>
+<br>
+
+Node-RED 실행 상태 시 다음 URL을 통해   
+Node-RED 개발 화면에 접속 할 수 있는데,   
+해당 예제에서는 크롬 브라우저를 사용했다.   
+```
+http://localhost:1880
+```
+![NKakaoTalk_20240625_120204690_02](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/c981ade2-931f-4856-8299-2d6bebfa8bb2)   
+
+<br>
+<br>
+
+마지막으로, dashboard 설치가 필요한데 방법은 아래와 같다.   
+![NKakaoTalk_20240625_120204690_03](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/2c23ba20-a54e-4f4f-86a9-0a77aaa94f7f)   
+> 팔렛트 관리 > 설치가능한 노드
+
+<br>
+<br>
+
+예제
+=
+간단한 입출력을 위한 노드 연결 방법은 다음과 같다.   
+![NKakaoTalk_20240625_120204690_04](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/8680b0ec-fef5-4d5f-a5a1-a5cb8d252c88)   
+
+<br>
+<br>
+
+이후 타임스탬프에서 출력 내용을 설정하고, 배포한다.   
+![NKakaoTalk_20240625_120204690_05](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/fe17b023-be54-44e9-83a3-ed30ce056634)   
+> 변경된 내용을 적용하기 위해선 배포가 필수적이다.
+
+<br>
+<br>
+
+배포 시, inject 블록을 클릭하면 내용이 출력되는데   
+이는 오른쪽 위에 디버그 창을 통해서 확인할 수 있다.   
+![NKakaoTalk_20240625_120204690_06](https://github.com/YooJeongJick/smartDevicePractice_2024/assets/145202997/0829f11d-a852-4ed6-b9f2-a4ef82040dbf)   
+
+

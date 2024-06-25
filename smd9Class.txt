@@ -1,0 +1,24 @@
+smd9Class
+
+https://nodejs.org/en
+node js 설치
+
+npm install -g --unsafe-perm node-red
+node red 설치
+
+node-red
+node red 실행
+http://localhost:1880
+
+/update-sensor
+http 설정
+
+http://localhost:1880/update-sensor?temperature=24.37
+배포 후 요청
+
+msg.payload = msg.payload.temperature;
+return msg;
+function 속성
+
+Ctrl + c  
+node red 종료

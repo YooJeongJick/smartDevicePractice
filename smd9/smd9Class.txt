@@ -1,0 +1,47 @@
+smd9Class
+
+https://nodejs.org/en
+node js 설치
+
+npm install -g --unsafe-perm node-red
+node red 설치
+
+node-red
+node red 실행
+http://localhost:1880
+
+/update-sensor
+http 설정
+
+http://localhost:1880/update-sensor?temperature=24.37
+배포 후 요청
+
+msg.payload = msg.payload.temperature;
+return msg;
+function 속성
+
+Ctrl + c  
+node red 종료
+
+//
+
+Node-Red, IBM사에서 만든 프로그래밍 도구
+오픈 소스로 공개, node 기반 움직임, 
+개개인의 노드를 연결하여 플로우를 만듦
+
+Iot 시스템, 많은 기기와 연결을 통해 많은 데이터 발생
+이와 같은 기기를 통제하는 것이 컨트롤러
+컨트롤러는 주 기능은 디바이스 통제, 외부 시스템 연계, 대시보드
+Node-RED는 컨트롤러 구현에 가장 적합
+
+Node-RED는 로우코드 개발 블랫폼
+코드를 적게 작성하도록 지원, 자바스크립트가 주요 언어
+블록을 연결하는 시각적인 방식으로 구현
+
+이벤트 드리븐 작동방식
+
+Node.js, 브라우저의 엔진을 일반적인 컴퓨터에서 작동
+Node-RED는 이와 같은 환경에서 작동 
+Node-RED 편집기는 인터넷 브라우저 내에서 사용 가능
+구현한 대시보드 역시 인터넷 브라저로 접속 가능
+
